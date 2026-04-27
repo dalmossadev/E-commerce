@@ -9,6 +9,8 @@ node_modules/
 # IDE
 .idea/
 .vscode/
+.vscode/*
+!.vscode/extensions.json
 *.swp
 *.swo
 
@@ -22,7 +24,6 @@ npm-debug.log*
 
 # Build
 dist/
-build/
 .next/
 
 # Testing
@@ -40,6 +41,19 @@ temp/
 
 # Backend
 backend/dist/
+backend/node_modules/
+backend/logs/
+
+# Frontend shop-varejo
+shop-varejo/node_modules/
 
 # OpenCode
 .opencode/
+
+# Scripts (todos os .sh são importantes - usar negação)
+*.sh
+
+# Documentação
+# Mantém: PRD.md, TDD.md, README.md, etc.
+# Backlog antigo
+backlog.md
