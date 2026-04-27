@@ -1,0 +1,10 @@
+// src/core/domain/Settings.ts
+export class Settings {
+  public id!: number;
+  public key!: string;   // Ex: 'store_whatsapp', 'store_name'
+  public value!: string; // Ex: '5571999999999'
+
+  constructor(props: Partial<Settings> = {}) {
+    Object.assign(this, props);
+  }
+}

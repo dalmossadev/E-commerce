@@ -1,0 +1,11 @@
+### Teste de Criação de Produto
+POST http://localhost:3000/api/v1/products
+Content-Type: application/json
+
+{
+  "name": "Tenis de Corrida",
+  "description": "Tenis alta performance",
+  "price": 299.90,
+  "category": "esporte",
+  "stock": 50
+}

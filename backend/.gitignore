@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Agent configuration
+agents.json
+.opencode/
+
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Build
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+tmp/
+temp/
+
+# Uploads (optional - depends on usage)
+uploads/*
+!uploads/.gitkeep
+
+# OpenCode AI
+.opencode/

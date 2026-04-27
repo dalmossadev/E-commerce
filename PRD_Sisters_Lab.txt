@@ -1,0 +1,94 @@
+PRD - Sisters Lab Backend (Modelo Híbrido)
+
+1. Visão do Produto
+
+Sistema backend para gerenciamento de produtos, variações, SKU e leads
+(modelo híbrido sob demanda + estoque).
+
+2. Problema
+
+Falta de controle estruturado de produtos e vendas em modelo híbrido.
+
+3. Solução
+
+Sistema com: - SKU por variação - Leads para controle manual - Suporte a
+estoque futuro
+
+4. Entidades
+
+Product
+
+-   id
+-   name
+-   brand
+-   category
+
+ProductVariant
+
+-   sku
+-   productId
+-   color
+-   size
+-   price
+-   fulfillmentType (ON_DEMAND | IN_STOCK)
+-   stock (opcional)
+
+Lead
+
+-   id
+-   sku
+-   customerName
+-   customerPhone
+-   status (PENDING | CONFIRMED | REJECTED)
+-   createdAt
+
+5. Regras de Negócio
+
+-   SKU único e imutável
+-   ON_DEMAND não controla estoque
+-   IN_STOCK exige estoque >= 0
+-   Leads não reservam estoque
+-   Confirmação é manual
+
+6. Fluxos
+
+Criar Produto
+
+1.  Criar produto
+2.  Gerar variações
+3.  Gerar SKU
+
+Registrar Lead
+
+1.  Cliente via WhatsApp
+2.  Admin registra
+3.  Status = PENDING
+
+Confirmar Lead
+
+1.  Verificar fornecedor
+2.  Atualizar status
+
+7. Use Cases
+
+-   CreateProduct
+-   GenerateVariants
+-   CreateLead
+-   UpdateLeadStatus
+-   ListProducts
+
+8. API
+
+POST /products GET /products POST /leads GET /leads PATCH /leads/:id
+
+9. Critérios
+
+-   SKU único
+-   Suporte híbrido
+-   Registro de leads funcional
+
+10. Arquitetura
+
+-   Clean Architecture
+-   SOLID
+-   TypeScript + Express + TypeORM

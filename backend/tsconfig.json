@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "rootDir": "./src", 
+    "outDir": "./dist",
+    "noEmit": false,
+    
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@adapters/*": ["src/adapters/*"],
+      "@infrastructure/swagger/*": ["src/infrastructure/swagger/*"],
+      "@infrastructure/upload/*": ["src/infrastructure/upload/*"],
+      "@infrastructure/cache/*": ["src/infrastructure/cache/*"]
+    },
+
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "declaration": true,
+    "types": ["node", "jest"],
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "src/__tests__"]
+}

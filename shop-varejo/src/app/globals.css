@@ -1,0 +1,120 @@
+/* ══════════════════════════════════════════════════════
+   globals.css — SHOP VAREJO
+   Neon Dark · A11Y: rem units · contraste 7:1+
+══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Variáveis de fonte ─────────────────────────────── */
+:root {
+  --font-display: 'Share Tech Mono';   /* Títulos — estilo terminal */
+  --font-body:    'DM Sans';           /* Corpo — legibilidade */
+  --font-mono:    'Rajdhani';          /* Preços, specs */
+}
+
+/* ── Base A11Y ───────────────────────────────────────── */
+html {
+  font-size: 1rem; /* Escala com as preferências do usuário */
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: #000000;
+  color: #FFFFFF;
+  font-family: var(--font-body), sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Focus visível (teclado) ─────────────────────────── */
+:focus-visible {
+  outline: 2px solid #00FF00;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── Scrollbar neon ──────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #00FF00; border-radius: 2px; }
+
+/* ── Seleção de texto ─────────────────────────────────── */
+::selection {
+  background-color: #00FF0033;
+  color: #00FF00;
+}
+
+/* ── Noise texture overlay ───────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ── Utilitários de layout ───────────────────────────── */
+@layer utilities {
+  .container-app {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Efeito neon no texto */
+  .text-neon {
+    color: #00FF00;
+    text-shadow: 0 0 8px #00FF0066, 0 0 16px #00FF0033;
+  }
+
+  /* Borda neon */
+  .border-neon {
+    border-color: #00FF00;
+    box-shadow: 0 0 8px #00FF0033;
+  }
+
+  /* Gradient text verde neon para preto */
+  .text-gradient-neon {
+    background: linear-gradient(135deg, #00FF00, #00CC00, #009900);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Scan line decorativa */
+  .scan-line::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00FF0066, transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+  }
+}
+
+/* ── Componentes base ────────────────────────────────── */
+@layer components {
+  /* Card base */
+  .card {
+    @apply bg-brand-surface border border-brand-border rounded-xl overflow-hidden
+           transition-all duration-300;
+  }
+  .card:hover {
+    @apply border-brand-primary bg-brand-surface-2;
+    box-shadow: 0 0 20px #00FF0022;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-bold
+           font-mono tracking-wider uppercase;
+  }
+}
