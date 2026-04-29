@@ -20,15 +20,16 @@ export interface CreateProductDTO {
 export interface ProductResponseDTO {
   id: number;
   name: string;
-  brand: string;
+  brand?: string | null;
   category: ProductCategory;
-  basePrice: number;
+  basePrice?: number | null;
   description?: string;
   originalPrice?: number | null;
   badge?: ProductBadge | null;
   specs?: Record<string, unknown>;
   featured: boolean;
   inStock: boolean;
+  imageName: string;            // Apenas o filename: "produto-6.webp"
   createdAt: Date;
   updatedAt: Date;
 }

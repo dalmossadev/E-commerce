@@ -127,14 +127,16 @@ src/
 class Product {
   id: number;
   name: string;
-  brand: string;
+  brand?: string | null;        // ✅ NULLABLE: Aceita nulos para resiliência contra legados
   category: ProductCategory;
-  basePrice: number;
+  basePrice?: number | null;     // ✅ NULLABLE: Aceita nulos para resiliência contra legados
   originalPrice?: number;
   badge?: ProductBadge;
   specs?: Record<string, any>;
   featured: boolean;
   inStock: boolean;
+  imageName: string;             // Nome do arquivo (ex: tenis-runner-pro.webp)
+  imageUrl?: string | null;       // URL completa gerada dinamicamente pelo Use Case
   variants: ProductVariant[];
   createdAt: Date;
   updatedAt: Date;
@@ -157,6 +159,29 @@ class Product {
   updateStock(quantity: number): void;
 }
 ```
+
+### 3.1.1 Image Handling (Frontend-Side)
+- **Backend:** Retorna apenas `imageName` (ex: "produto-6.webp") no DTO
+- **Frontend:** Next.js serve `public/` na raiz, então `/img/catalogo/{imageName}` resolve para `shop-varejo/public/img/catalogo/{imageName}`
+- **ProductCard.tsx:** Constrói `imageSrc` localmente:
+  ```typescript
+  const imageSrc = imageName
+    ? `/img/catalogo/${imageName}`
+    : '/img/catalogo/produto-default.webp';
+  ```
+- **Vantagem:** Imagens servidas pelo Next.js em `localhost:3000`, não pelo backend em `localhost:3001`
+- **next.config.js:** Remote patterns para `localhost:3001` não são mais necessários
+
+### 3.1.2 Mapeamento TypeORM (ProductSchema.ts)
+```typescript
+{
+  brand: { type: "varchar", length: 100, nullable: true },      // ✅ Atualizado
+  basePrice: { type: "int", nullable: true },                   // ✅ Atualizado
+  imageName: { type: "varchar", length: 255 },                // ✅ Apenas imageName no banco
+  // imageUrl NÃO existe no banco - gerado dinamicamente no Use Case
+}
+```
+- **Nota:** Campo `imageUrl` REMOVIDO do ProductSchema.ts (coluna não existia no banco, causava erro 500).
 
 ### 3.2 ProductVariant
 ```typescript
@@ -223,6 +248,28 @@ class Lead {
 }
 ```
 
+### 3.3 ProductResponseDTO
+```typescript
+export interface ProductResponseDTO {
+  id: number;
+  name: string;
+  brand?: string | null;           // ✅ Nullable conforme entidade
+  category: ProductCategory;
+  basePrice?: number | null;        // ✅ Nullable conforme entidade
+  description?: string;
+  originalPrice?: number | null;
+  badge?: ProductBadge | null;
+  specs?: Record<string, unknown>;
+  featured: boolean;
+  inStock: boolean;
+  imageName: string;               // Apenas o filename: "produto-6.webp"
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+- **Nota:** DTO agora retorna apenas `imageName` (sem `imageUrl`)
+- **Frontend:** Constrói o caminho localmente usando `/img/catalogo/{imageName}`
+
 ### 3.4 User
 ```typescript
 enum UserRole {
@@ -235,7 +282,7 @@ class User {
   id: number;
   email: string;
   password: string;
-  name?: string;
+  name?: string;  // ✅ Mapeado no UserSchema.ts (VARCHAR(255), nullable)
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
@@ -308,11 +355,18 @@ class SkuService {
 | Use Case | Descrição | Status |
 |---------|----------|--------|
 | CreateProductUseCase | Cria produto + variantes (cartesian product) | ✅ COMPLETO |
-| ListProductsUseCase | Lista com filtros/paginação | ✅ COMPLETO |
-| GetProductBySkuUseCase | Busca por SKU | ✅ COMPLETO |
+| ListProductsUseCase | Lista com filtros/paginação (retorna imageName) | ✅ COMPLETO |
+| GetProductBySkuUseCase | Busca por SKU (retorna imageName) | ✅ COMPLETO |
 | SeedProductsUseCase | Seed de dados | ✅ COMPLETO |
 | UpdateProductUseCase | Atualiza produto | ❌ NÃO IMPLEMENTADO |
 | DeleteProductUseCase | Remove produto | ❌ NÃO IMPLEMENTADO |
+
+### 5.1.1 Change Log (v1.4.2 - 2026-04-29)
+- ✅ **ListProductsUseCase.ts:** Removida lógica de gerar URL completa (APP_URL)
+- ✅ **GetProductBySkuUseCase.ts:** Removida lógica de gerar URL completa
+- ✅ **ProductResponseDTO:** Removido campo `imageUrl` (agora retorna apenas `imageName`)
+- ✅ **Product.ts:** `imageUrl` agora é campo comum (não getter)
+- ✅ **Imagens:** Servidas localmente pelo Next.js em `localhost:3000`
 
 ### 5.2 Leads
 | Use Case | Descrição | Status |
@@ -347,9 +401,9 @@ class SkuService {
 ### 6.1 Products
 | Método | Endpoint | Descrição | Auth | Status |
 |--------|----------|-----------|------|--------|
-| GET | `/api/v1/products` | Listar com filtros | Não | ✅ |
+| GET | `/api/v1/products` | Listar com filtros + imageName | Não | ✅ |
 | POST | `/api/v1/products` | Criar | Não | ✅ |
-| GET | `/api/v1/products/:sku` | Buscar por SKU | Não | ✅ |
+| GET | `/api/v1/products/:sku` | Buscar por SKU + imageName | Não | ✅ |
 | PUT | `/api/v1/products/:sku` | Atualizar | - | ❌ NÃO IMPLEMENTADO |
 | DELETE | `/api/v1/products/:sku` | Deletar | - | ❌ NÃO IMPLEMENTADO |
 
@@ -550,6 +604,9 @@ class InternalServerError extends AppError { } // 500
 - ✅ Entity Schemas em `mappers/` (isolados das entidades de domínio)
 - ✅ Seed de produtos
 - ✅ Auditoria de variantes via `VariantAuditSubscriber`
+- ✅ **UserSchema atualizado:** coluna `name VARCHAR(255) NULL` adicionada (migration executada)
+- ✅ **ProductSchema corrigido:** REMOVIDO campo `imageUrl` (não existia no banco, causava erro 500)
+- ✅ **Variável APP_URL:** Adicionada no `.env` (ex: `http://localhost:3001`)
 
 ### 13.2 TypeORM Schemas (Shadow Tables)
 ```typescript
@@ -640,7 +697,16 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 
 ## 16. Módulos Implementados (Agents)
 
-### 16.1 Sales (Orders) - ✅ COMPLETO
+### 16.1 Refatoração de Interface (v1.4.0 - INÍCIO)
+**Diretriz do PRD.md:**
+- ✅ **Identidade Visual (Cores):** CONGELADA. As cores atuais (Preto #000, Branco #FFF, Verde Neon #00FF00) são imutáveis.
+- 🛠️ **Moldura e Layout:** FLEXÍVEL. Agentes UX e UI têm liberdade técnica para remodelar estrutura, componentes e disposição para maximizar conversão.
+
+**Agentes Responsáveis:**
+- **Agent UX:** Otimização da hierarquia de informação e fluxos de usuário.
+- **Agent UI:** Remodelagem visual da "moldura", garantindo uso exclusivo da paleta pré-estabelecida.
+
+### 16.2 Sales (Orders) - ✅ COMPLETO
 | Arquivo | Descrição |
 |---------|-----------|
 | `src/core/domain/Order.ts` | Entidade rica com state machine |
@@ -660,6 +726,89 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 - `GET /api/v1/orders/:id`
 - `PATCH /api/v1/orders/:id/status`
 - `POST /api/v1/orders/:id/cancel`
+
+### 16.3 ERP Medium - ✅ COMPLETO (v1.4.0)
+
+#### 16.3.1 Campaigns CRUD
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/interfaces/ICampaignRepository.ts` | Interface |
+| `src/core/use-cases/campaigns/CreateCampaignUseCase.ts` | Criar |
+| `src/core/use-cases/campaigns/ListCampaignsUseCase.ts` | Listar paginado |
+| `src/core/use-cases/campaigns/GetCampaignByIdUseCase.ts` | Buscar por ID |
+| `src/core/use-cases/campaigns/UpdateCampaignUseCase.ts` | Atualizar |
+| `src/core/use-cases/campaigns/DeleteCampaignUseCase.ts` | Remover |
+| `src/core/dto/CampaignDTO.ts` | DTO |
+| `src/infrastructure/database/mappers/CampaignSchema.ts` | TypeORM Schema |
+| `src/infrastructure/database/repositories/TypeORMCampaignRepository.ts` | Repositório |
+| `src/adapters/http/controllers/CampaignController.ts` | Controller |
+| `src/adapters/http/routes/campaign.routes.ts` | Rotas |
+| `src/adapters/http/validations/campaign.validation.ts` | Zod |
+
+**Endpoints:**
+- `GET /api/v1/campaigns` (paginação)
+- `POST /api/v1/campaigns`
+- `GET /api/v1/campaigns/:id`
+- `PUT /api/v1/campaigns/:id`
+- `DELETE /api/v1/campaigns/:id`
+
+#### 16.3.2 Customers CRUD
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/interfaces/ICustomerRepository.ts` | Interface |
+| `src/core/use-cases/customers/CreateCustomerUseCase.ts` | Criar |
+| `src/core/use-cases/customers/ListCustomersUseCase.ts` | Listar paginado |
+| `src/core/use-cases/customers/GetCustomerByIdUseCase.ts` | Buscar por ID |
+| `src/core/use-cases/customers/UpdateCustomerUseCase.ts` | Atualizar |
+| `src/core/use-cases/customers/DeleteCustomerUseCase.ts` | Remover |
+| `src/core/dto/CustomerDTO.ts` | DTO |
+| `src/infrastructure/database/mappers/CustomerSchema.ts` | TypeORM Schema |
+| `src/infrastructure/database/repositories/TypeORMCustomerRepository.ts` | Repositório |
+| `src/adapters/http/controllers/CustomerController.ts` | Controller |
+| `src/adapters/http/routes/customer.routes.ts` | Rotas |
+| `src/adapters/http/validations/customer.validation.ts` | Zod |
+
+**Endpoints:**
+- `GET /api/v1/customers` (paginação)
+- `POST /api/v1/customers`
+- `GET /api/v1/customers/:id`
+- `PUT /api/v1/customers/:id`
+- `DELETE /api/v1/customers/:id`
+
+#### 16.3.3 Product History API
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/interfaces/IVariantHistoryRepository.ts` | Interface |
+| `src/core/use-cases/history/ListProductHistoryUseCase.ts` | Listar histórico |
+| `src/core/dto/ProductHistoryDTO.ts` | DTO |
+| `src/infrastructure/database/repositories/TypeORMProductHistoryRepository.ts` | Repositório |
+| `src/adapters/http/controllers/ProductHistoryController.ts` | Controller |
+| `src/adapters/http/routes/product-history.routes.ts` | Rotas |
+
+**Endpoints:**
+- `GET /api/v1/products/:sku/history` (histórico por variante)
+- `GET /api/v1/history` (histórico geral, admin)
+
+#### 16.3.4 Settings API
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/interfaces/ISettingsRepository.ts` | Interface |
+| `src/core/use-cases/settings/GetSettingsUseCase.ts` | Listar/Obter |
+| `src/core/use-cases/settings/UpdateSettingUseCase.ts` | Atualizar |
+| `src/core/dto/SettingsDTO.ts` | DTO |
+| `src/infrastructure/database/mappers/SettingsSchema.ts` | TypeORM Schema |
+| `src/infrastructure/database/repositories/TypeORMSettingsRepository.ts` | Repositório |
+| `src/adapters/http/controllers/SettingsController.ts` | Controller |
+| `src/adapters/http/routes/settings.routes.ts` | Rotas |
+| `src/adapters/http/validations/settings.validation.ts` | Zod |
+
+**Endpoints:**
+- `GET /api/v1/settings` (admin)
+- `PATCH /api/v1/settings/:key` (admin)
+
+#### 16.3.5 Lead Audit
+- **Arquivo:** `src/core/use-cases/lead/UpdateLeadStatusUseCase.ts`
+- **Lógica:** Ao confirmar lead (status `CONFIRMED`), registra evento `lead_confirmed` no AuditLog via `IAuditRepository`
 
 ### 16.2 Procurement (Purchases) - ✅ COMPLETO
 | Arquivo | Descrição |
@@ -704,6 +853,65 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 
 ---
 
+## 16. Novos Módulos (Agent ERP Medium v1.4)
+
+### 16.1 Campaigns CRUD
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/dto/CampaignDTO.ts` | CreateCampaignDTO, UpdateCampaignDTO, CampaignQueryDTO |
+| `src/core/use-cases/campaign/CampaignUseCases.ts` | CreateCampaignUseCase, ListCampaignsUseCase, GetCampaignByIdUseCase, UpdateCampaignUseCase, DeleteCampaignUseCase |
+| `src/infrastructure/database/repositories/TypeORMCampaignRepository.ts` | Implementação ICampaignRepository com paginação |
+| `src/adapters/http/controllers/CampaignController.ts` | Controller com CRUD completo (POST, GET, PATCH, DELETE) |
+| `src/adapters/http/routes/campaign.routes.ts` | Rotas `/api/v1/campaigns` |
+| `src/adapters/http/validations/campaign.validation.ts` | Schemas Zod para create/update |
+| `src/infrastructure/database/mappers/CampaignSchema.ts` | Atualizado com createdAt/updatedAt |
+
+### 16.2 Customers CRUD
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/dto/CustomerDTO.ts` | CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO |
+| `src/core/use-cases/customers/CustomerUseCases.ts` | CreateCustomerUseCase, ListCustomersUseCase, GetCustomerByIdUseCase, UpdateCustomerUseCase, DeleteCustomerUseCase |
+| `src/infrastructure/database/repositories/TypeORMCustomerRepository.ts` | Implementação ICustomerRepository com paginação |
+| `src/adapters/http/controllers/CustomerController.ts` | Controller com CRUD completo |
+| `src/adapters/http/routes/customer.routes.ts` | Rotas `/api/v1/customers` |
+| `src/adapters/http/validations/customer.validation.ts` | Schemas Zod para create/update |
+| `src/infrastructure/database/mappers/CustomerSchema.ts` | Atualizado com createdAt/updatedAt |
+
+### 16.3 Product History API
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/domain/VariantHistory.ts` | Entidade de domínio VariantHistory |
+| `src/infrastructure/database/repositories/TypeORMVariantHistoryRepository.ts` | Repositório para consulta de histórico |
+| `src/adapters/http/controllers/ProductHistoryController.ts` | Controller para expor VariantHistory |
+| `src/adapters/http/routes/product-history.routes.ts` | Rotas `/api/v1/product-history` |
+| `src/infrastructure/database/mappers/VariantHistorySchema.ts` | Valores monetários em bigint (centavos) |
+
+### 16.4 Settings API
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/dto/SettingsDTO.ts` | CreateSettingsDTO, UpdateSettingsDTO |
+| `src/core/use-cases/settings/SettingsUseCases.ts` | GetSettingsUseCase, ListSettingsUseCase, CreateSettingsUseCase, UpdateSettingsUseCase, DeleteSettingsUseCase |
+| `src/infrastructure/database/repositories/TypeORMSettingsRepository.ts` | Implementação ISettingsRepository |
+| `src/adapters/http/controllers/SettingsController.ts` | Controller chave-valor |
+| `src/adapters/http/routes/settings.routes.ts` | Rotas `/api/v1/settings` |
+| `src/adapters/http/validations/settings.validation.ts` | Schemas Zod |
+
+### 16.5 Lead Audit
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/core/use-cases/LeadUseCases.ts` | UpdateLeadStatusUseCase atualizado para registrar no AuditLog quando status = CONFIRMED |
+
+### 16.6 Pagination
+- Campaign e Customer implementam paginação igual ao Products (query params: page, limit, sortBy, sortOrder, search)
+- Retorno padrão: `{ data, total, page, limit, totalPages }`
+
+### 16.7 Container.ts
+- Novos tokens: `campaignRepositoryToken`, `customerRepositoryToken`, `settingsRepositoryToken`
+- Registro de todos os novos Use Cases
+- UpdateLeadStatusUseCase recebe `IAuditRepository` para auditoria
+
+---
+
 ## 17. Integração Frontend-Backend (Shop Varejo)
 
 ### 17.1 Visão Geral
@@ -731,6 +939,23 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 | `page.tsx` | Simplificado para usar ProductGrid com API |
 | `ImageWithFallback.tsx` | Componente com fallback para imagens 404 |
 
+### 17.5 Módulo Frontend-Sales (Agent Frontend-Bridge)
+**Arquivos Criados/Atualizados:**
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/app/api/orders/route.ts` | Proxy para backend `/api/v1/orders` (porta 3001) |
+| `src/app/checkout/page.tsx` | Formulário de checkout com `paymentMethod` |
+| `src/app/orders/page.tsx` | Listagem de pedidos autenticada via cookie `__session` |
+| `src/contexts/CartContext.tsx` | Contexto de carrinho (localStorage) |
+| `src/components/providers/ClientProviders.tsx` | Integração do `CartProvider` |
+
+**Funcionalidades:**
+- ✅ **Desconto Progressivo:** 5% (10+ itens), 10% (20+), 15% (50+), 20% (100+)
+- ✅ **Máquina de Estados:** `PENDING → PAID → SHIPPED → DELIVERED`
+- ✅ **Autenticação:** Validação via cookie `__session` (JWT)
+- ✅ **Checkout:** Captura `paymentMethod` e itens do carrinho
+- ✅ **Orders:** Listagem com status visual e histórico do cliente
+
 ### 17.5 Dados dos Produtos (MySQL)
 | id | Nome | imageName | Status |
 |----|------|-----------|--------|
@@ -749,10 +974,47 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 
 ---
 
-## 18. Histórico de Versões
+## 18. Problemas Conhecidos (QA)
+
+### 18.1 Testes com Falhas
+| Teste | Problema | Status |
+|-------|----------|--------|
+| `orders.test.ts` | `TypeError: Container.discountService is not a function` | ✅ CORRIGIDO |
+| `order.test.ts` | Progressive discounts calculando errado (x10) | ✅ CORRIGIDO |
+
+### 18.2 Correções de Segurança (Agent Security)
+**1. UserSchema.ts - Campo `name` faltante**
+- **Problema:** Entidade `User` tinha campo `name?: string`, mas `UserSchema.ts` não mapeava essa coluna
+- **Causa:** `synchronize: false` no TypeORM, coluna nunca foi criada no MySQL
+- **Solução:** 
+  - Adicionado `name: { type: "varchar", length: 255, nullable: true }` no UserSchema.ts
+  - Executada migration manual: `ALTER TABLE user ADD COLUMN name VARCHAR(255) NULL AFTER password`
+- **Status:** ✅ Corrigido e testado
+
+**2. Seed de Admin (QA)**
+- **Arquivo:** `src/seed-admin.ts`
+- **Credenciais:** `admin@sisterslab.com` / `password123`
+- **Role:** `admin`
+- **Status:** ✅ Usuário criado e validado com login 201
+
+**3. AuthService.ts**
+- **Status:** ✅ Já implementava corretamente `generateTokens()` com `user.name`
+- **Registro:** `src/core/use-cases/AuthUseCases.ts` salva `user.name` no banco
+
+### 18.3 Servidor
+- ✅ Porta 3001 inicia corretamente
+- ✅ Todas as rotas disponíveis
+
+---
+
+## 19. Histórico de Versões
 
 | Versão | Data | Alterações |
 |--------|------|------------|
+| 1.4.2 | 2026-04-29 | **Correção Image Handling:** Removido `imageUrl` do DTO e Use Cases. Imagens agora servidas pelo Next.js (`localhost:3000`) usando apenas `imageName`. Removida dependência de `APP_URL`. Builds passaram em frontend e backend. |
+| 1.4.1 | 2026-04-29 | **Correção Mapeamento:** REMOVIDO `imageUrl` do ProductSchema.ts (coluna inexistente). **ImageUrl Dinâmica:** Use Cases agora geram URL completa usando `APP_URL` + `imageName`. **Product.ts:** `imageUrl` agora é campo comum (não getter). **Build:** `npm run build` passou. |
+| 1.3.0 | 2026-04-27 | **Agent Security:** Correção UserSchema (campo `name`), Seed Admin, QA validado. **Agent Frontend-Bridge:** Módulo frontend-sales completo (checkout, orders, cart) |
+| 1.2.1 | 2026-04-27 | QA: Problemas de testes registrados |
 | 1.2.0 | 2026-04-27 | Integração Frontend-Backend (Shop Varejo) |
 | 1.1.0 | 2026-04-27 | Módulos Sales, Procurement, Catalog CRUD, QA Tests |
 | 1.0.9 | 2026-04-27 | Performance tests, VariantAuditSubscriber, Mappers |
@@ -762,4 +1024,4 @@ export class VariantAuditSubscriber implements EntitySubscriberInterface<Product
 
 ---
 **Autor: Dalmo Pereira**
-*Atualizado: 2026-04-27*
+*Atualizado: 2026-04-29 | v1.4.2 - CORREÇÃO: ImageUrl removido do DTO/Use Cases. Imagens servidas pelo Next.js (localhost:3000) via imageName*

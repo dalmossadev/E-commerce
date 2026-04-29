@@ -8,9 +8,9 @@ export const ProductSchema = new EntitySchema<Product>({
   columns: {
     id: { type: "int", primary: true, generated: "increment" },
     name: { type: "varchar", length: 255 },
-    brand: { type: "varchar", length: 100 },
+    brand: { type: "varchar", length: 100, nullable: true },
     description: { type: "text" },
-    basePrice: { type: "int" },
+    basePrice: { type: "int", nullable: true },
     originalPrice: { type: "int", nullable: true },
     category: { type: "varchar", length: 50 },
     imageName: { type: "varchar", length: 255 },

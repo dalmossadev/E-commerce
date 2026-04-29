@@ -8,11 +8,12 @@ export type ProductBadge = 'novo' | 'oferta' | 'exclusivo' | 'esgotando' | 'lanc
 export class Product {
     public id!: number;
     public name!: string;
-    public brand!: string;
+    public brand?: string | null;
     public description!: string | "";
-    public basePrice!: number ;
+    public basePrice?: number | null;
     public originalPrice?: number | null = null;
     public imageName!: string;
+    public imageUrl?: string | null = null;  // Definido pelo Use Case com URL completa
     public altText!: string;
     public category!: ProductCategory;
     public badge?: ProductBadge | null = null;
@@ -31,8 +32,8 @@ export class Product {
     this.updatedAt = props.updatedAt || new Date();
 }
 
-public get discountPercentage(): number {
-        if (!this.originalPrice || this.originalPrice <= this.basePrice) {
+    public get discountPercentage(): number {
+        if (!this.originalPrice || !this.basePrice || this.originalPrice <= this.basePrice) {
             return 0;
         }
         return Math.round(((this.originalPrice - this.basePrice) / this.originalPrice) * 100);
@@ -68,7 +69,7 @@ public get discountPercentage(): number {
     }
 
     public applyDiscount(newPrice: number): void {
-        if (newPrice >= this.basePrice) {
+        if (!this.basePrice || newPrice >= this.basePrice) {
             throw new Error('Discount price must be less than base price');
         }
         this.originalPrice = this.basePrice;

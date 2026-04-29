@@ -1,13 +1,11 @@
 /**
  * @file src/components/features/ProductCard.tsx
- * @description Card de produto orientado a SKU.
- *
- * Recebe APENAS a prop `sku` e busca todos os dados no site-config.ts.
+ * @description Card de produto — dados vindos da API (product prop) ou legacy (sku).
  *
  * Princípios SOLID:
  *   SRP — só exibe um produto
  *   OCP — novos campos no config sem alterar este componente
- *   DIP — depende da abstração (getProductBySku), não dos dados diretos
+ *   DIP — depende da abstração, não dos dados diretos
  *
  * GRACEFUL DEGRADATION:
  *   - SKU inexistente → estado visual "Produto Indisponível"
@@ -18,18 +16,17 @@
 'use client';
 
 import { useState } from 'react';
-import { ShoppingBag, AlertTriangle, ExternalLink, Info } from 'lucide-react';
+import { ShoppingBag, AlertTriangle, ExternalLink, Info, Heart, MapPin, Clock } from 'lucide-react';
 import {
-  getProductBySku,
-  getProductImageUrl,
   getWhatsAppLink,
-  formatPrice,
   calcDiscount,
 } from '@/constants/site-config';
 import { Button }             from '@/components/ui/Button';
 import { Badge }              from '@/components/ui/Badge';
 import { ImageWithFallback }  from '@/components/ui/ImageWithFallback';
 import { cn }                 from '@/lib/utils';
+import { useWishlist }        from '@/hooks/useWishlist';
+import { LeadInterestModal }  from '@/components/LeadInterestModal';
 
 // ── Props ──────────────────────────────────────────────────────────
 type ProductCardProps = {
@@ -37,14 +34,21 @@ type ProductCardProps = {
     id: number;
     name: string;
     description: string;
-    basePrice: number;
-    originalPrice?: number;
+    basePrice?: number;  // centavos — dividir por 100 para exibir
+    price?: number;
+    originalPrice?: number;  // centavos
     imageName: string;
     altText: string;
+    imageUrl?: string;  // URL completa vinda do backend: http://localhost:3001/img/catalogo/arquivo.webp
     category: string;
-    badge?: string;
+    badge?: string | null;
     inStock: boolean;
+    featured?: boolean;
     specs?: Record<string, string>;
+    sku?: string;
+    variant?: {
+      fulfillmentType?: string;
+    };
   };
   sku?: string;
   className?: string;
@@ -87,60 +91,101 @@ function ProductNotFound({ sku }: { sku: string }) {
 // ── Componente principal ───────────────────────────────────────────
 export function ProductCard({ product: propProduct, sku, className }: ProductCardProps) {
   const [showSpecs, setShowSpecs] = useState(false);
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
-  // Support both props.product (API) or sku (legacy config)
-  const product = propProduct || (sku ? getProductBySku(sku) : null);
+  // Support props.product (API data)
+  const product = propProduct;
 
   // ── Graceful Degradation: produto não encontrado ─────────────────────
   if (!product) {
-    return sku ? <ProductNotFound sku={sku} /> : null;
+    return null;
   }
 
   // Optional chaining em todos os acessos
   const name          = product?.name           ?? 'Produto';
   const description   = product?.description    ?? '';
-  // API usa basePrice, config usa price
-  const price         = product?.basePrice ?? (product as any)?.price ?? 0; 
-  const originalPrice = product?.originalPrice;
-  const imageName     = product?.imageName      ?? '';
+  // API usa basePrice em centavos, config usa price
+  const basePrice    = (product as any)?.basePrice ?? (product as any)?.price ?? 0;
+  const displayPrice  = (basePrice / 100).toFixed(2);  // converte centavos para reais
+  const originalPrice = (product as any)?.originalPrice;
+  const displayOriginal = originalPrice ? (originalPrice / 100).toFixed(2) : null;
+  const imageName    = product?.imageName || '';
   const altText       = product?.altText        ?? `Imagem de ${name}`;
-  const badge         = product?.badge;
+  const badge         = (product as any)?.badge;
   const inStock       = product?.inStock        ?? false;
-  const specs         = product?.specs;
+  const specs         = (product as any)?.specs as Record<string, string> | undefined;
 
-  const discountPct   = originalPrice ? calcDiscount(originalPrice, price) : null;
+  // imageSrc: constrói a partir de imageName (Next.js serve public/ na raiz)
+  const imageSrc = imageName
+    ? `/img/catalogo/${imageName}`
+    : '/img/catalogo/produto-default.webp';
+
+  const discountPct   = originalPrice ? calcDiscount(originalPrice, basePrice) : null;
 
   const waLink = getWhatsAppLink(
-    `Olá! Tenho interesse no produto *${name}*. Pode me ajudar?`
+    `Olá! Tenho interesse no produto *${name}* (SKU: ${sku || 'N/A'}). Pode me ajudar?`
   );
+
+  const handleWhatsAppClick = () => {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'click', {
+        event_category: 'WhatsApp',
+        event_label: `Product: ${name} (${sku})`,
+        value: basePrice,
+      });
+    }
+  };
 
   return (
     <article
-      className={cn('card group flex flex-col', className)}
+      className={cn('card group flex flex-col relative', className)}
       aria-label={name}
     >
-      {/* ── Imagem ──────────────────────────────────────────── */}
-      <div className="relative aspect-square overflow-hidden bg-brand-surface-2">
-        <ImageWithFallback
-          src={getProductImageUrl(imageName)}
-          alt={altText}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          fallbackLabel={`Imagem de ${name} indisponível`}
-        />
+        {/* ── Imagem ────────────────────────────────────────── */}
+        <div className="relative aspect-square overflow-hidden bg-brand-surface-2">
+          <ImageWithFallback
+             src={imageSrc}
+             alt={altText}
+             fill
+             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+             className="object-cover transition-transform duration-700 group-hover:scale-110"
+             fallbackLabel={`Imagem de ${name} indisponível`}
+           />
 
-        {/* Badge */}
+        {/* Overlay hover */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 z-10" />
+
+        {/* Badge - só exibe se badge não for null/undefined */}
         {badge && (
-          <div className="absolute top-3 left-3 z-10">
+          <div className="absolute top-3 left-3 z-20">
             <Badge type={badge} />
+          </div>
+        )}
+
+        {/* Pronta Entrega Badge (Task 04) */}
+        {(product as any)?.variant?.fulfillmentType === 'IN_STOCK' && (
+          <div className="absolute top-3 right-3 z-20">
+            <span className="badge bg-brand-primary/90 text-brand-background border-none text-[10px] font-mono flex items-center gap-1">
+              <MapPin size={10} aria-hidden="true" />
+              Pronta Entrega
+            </span>
+          </div>
+        )}
+
+        {/* Desconto pill */}
+        {discountPct && inStock && (
+          <div className="absolute top-3 right-3 z-20">
+            <span className="badge bg-red-500/90 text-white border-none text-xs font-mono shadow-lg">
+              −{discountPct}%
+            </span>
           </div>
         )}
 
         {/* Fora de estoque */}
         {!inStock && (
           <div
-            className="absolute inset-0 bg-black/70 flex items-center justify-center z-20"
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-20"
             aria-label="Produto fora de estoque"
           >
             <span className="font-display text-sm text-brand-muted tracking-widest uppercase">
@@ -149,65 +194,99 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
           </div>
         )}
 
-        {/* Desconto pill */}
-        {discountPct && inStock && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="badge bg-red-500/90 text-white border-none text-xs">
-              −{discountPct}%
-            </span>
+        {/* Wishlist + Quick actions no hover */}
+        {inStock && (
+          <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                toggleWishlist(sku || '');
+              }}
+              className="p-2 bg-black/80 backdrop-blur-sm rounded-full hover:bg-brand-primary/20 transition-colors"
+              aria-label={isInWishlist(sku || '') ? 'Remover da wishlist' : 'Adicionar à wishlist'}
+            >
+              <Heart
+                size={16}
+                className={isInWishlist(sku || '') ? 'fill-red-500 text-red-500' : 'text-white'}
+              />
+            </button>
+          </div>
+        )}
+
+        {/* CTA overlay no hover */}
+        {inStock && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                <Button
+                  as="a"
+                  href={waLink}
+                  target="_blank"
+                  variant="primary"
+                  size="sm"
+                  fullWidth
+                  className="shadow-neon"
+                  leftIcon={<ShoppingBag size={14} aria-hidden="true" />}
+                  onClick={handleWhatsAppClick}
+                >
+                  Comprar via WA
+                </Button>
           </div>
         )}
       </div>
 
       {/* ── Body ────────────────────────────────────────────── */}
-      <div className="flex flex-col flex-1 p-4 gap-3">
+      <div className="flex flex-col flex-1 p-4 gap-2">
 
         {/* SKU */}
-        <p className="font-mono text-xs text-brand-muted/60 tracking-widest">
-          // {sku}
+        <p className="font-mono text-[10px] text-brand-muted/50 tracking-widest uppercase">
+          {sku}
         </p>
 
         {/* Nome */}
-        <h3 className="font-display text-base font-bold text-brand-text
-                       leading-tight tracking-wide line-clamp-2">
+        <h3 className="font-display text-sm font-bold text-brand-text
+                       leading-tight tracking-wide line-clamp-2 group-hover:text-brand-primary transition-colors">
           {name}
         </h3>
 
-        {/* Descrição */}
-        <p className="text-sm text-brand-muted leading-relaxed line-clamp-2 flex-1">
-          {description}
-        </p>
-
-        {/* Preço */}
-        <div className="flex items-baseline gap-2" aria-label={`Preço: ${formatPrice(price)}`}>
-          <span className="font-mono text-xl font-bold text-brand-primary tracking-tight">
-            {formatPrice(price)}
+        {/* Preço destacado */}
+        <div className="flex items-baseline gap-2 mt-1" aria-label={`Preço: R$ ${displayPrice}`}>
+          <span className="font-mono text-lg font-bold text-brand-primary tracking-tight">
+            R$ {displayPrice}
           </span>
-          {originalPrice && (
-            <span className="font-mono text-sm text-brand-muted line-through">
-              {formatPrice(originalPrice)}
+          {displayOriginal && (
+            <span className="font-mono text-xs text-brand-muted/60 line-through">
+              R$ {displayOriginal}
+            </span>
+          )}
+          {discountPct && (
+            <span className="font-mono text-[10px] text-red-500 font-bold">
+              -{discountPct}%
             </span>
           )}
         </div>
 
-        {/* Specs toggle */}
+        {/* Descrição resumida */}
+        <p className="text-xs text-brand-muted leading-relaxed line-clamp-2 flex-1">
+          {description}
+        </p>
+
+        {/* Specs toggle compacto */}
         {specs && Object.keys(specs).length > 0 && (
-          <div>
+          <div className="pt-1">
             <button
               onClick={() => setShowSpecs(v => !v)}
-              className="flex items-center gap-1.5 text-xs text-brand-muted
-                         hover:text-brand-primary transition-colors font-mono"
+              className="flex items-center gap-1.5 text-[10px] text-brand-muted
+                         hover:text-brand-primary transition-colors font-mono uppercase tracking-wider"
               aria-expanded={showSpecs}
               aria-controls={`specs-${sku}`}
             >
-              <Info size={12} aria-hidden="true" />
-              {showSpecs ? 'Ocultar specs' : 'Ver especificações'}
+              <Info size={10} aria-hidden="true" />
+              {showSpecs ? 'Ocultar' : 'Specs'}
             </button>
 
             {showSpecs && (
               <div
                 id={`specs-${sku}`}
-                className="mt-2 p-3 bg-brand-background/60 rounded-lg
+                className="mt-2 p-2 bg-brand-background/60 rounded-lg
                            border border-brand-border"
               >
                 {Object.entries(specs).map(([k, v]) => (
@@ -218,8 +297,8 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
           </div>
         )}
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
+        {/* CTAs sempre visíveis no mobile */}
+        <div className="flex gap-2 mt-auto pt-2 sm:hidden">
           <Button
             as="a"
             href={waLink}
@@ -227,25 +306,20 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
             variant="primary"
             size="sm"
             fullWidth
-            disabled={!inStock}
             aria-disabled={!inStock}
             leftIcon={<ShoppingBag size={14} aria-hidden="true" />}
           >
-            {inStock ? 'Comprar via WA' : 'Indisponível'}
-          </Button>
-
-          <Button
-            as="a"
-            href={waLink}
-            target="_blank"
-            variant="outline"
-            size="sm"
-            aria-label={`Ver detalhes de ${name} no WhatsApp`}
-            leftIcon={<ExternalLink size={14} aria-hidden="true" />}
-          >
-            Detalhes
+            {inStock ? 'Comprar' : 'Indisponível'}
           </Button>
         </div>
+
+        {/* Lead Modal */}
+        <LeadInterestModal
+          sku={sku || ''}
+          productName={name}
+          isOpen={showLeadModal}
+          onClose={() => setShowLeadModal(false)}
+        />
       </div>
     </article>
   );

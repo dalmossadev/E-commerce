@@ -10,8 +10,10 @@ export class GetProductBySkuUseCase {
         
         if (!product) {
             logger.warn(`Tentativa de busca por SKU inexistente: ${sku}`);
+            return null;
         }
-        
+
+        // imageUrl será construído no frontend usando imageName
         return product;
     }
 }
