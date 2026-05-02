@@ -14,11 +14,13 @@
  */
 
 // ── Base de imagens — altere apenas aqui para migrar de servidor ──
+console.log('Constante IMAGE_BASE_URL definida, origem da constante: /src/constants/site-config.ts');
 export const IMAGE_BASE_URL = '/img/catalogo' as const;
 export const BANNER_BASE_URL = '/img/banners' as const;
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001' as const;
 
 // ── Informações do site ───────────────────────────────────────────
+console.log('Constante IMAGE_BASE_URL definida, origem da constante: /src/constants/site-config.ts'); 
 export const SITE_INFO = {
   name:        'SHOP VAREJO',
   tagline:     'Produtos selecionados. Qualidade garantida.',
@@ -32,6 +34,7 @@ export const SITE_INFO = {
   },
 } as const;
 
+console.log('Constante SITE_INFO definida, origem da constante: /src/constants/site-config.ts');
 // ── Tipos ──────────────────────────────────────────────────────────
 export type ProductCategory =
   | 'destaque'
@@ -41,6 +44,7 @@ export type ProductCategory =
   | 'esporte'
   | 'beleza';
 
+  console.log('Tipo ProductCategory definido, origem do tipo: /src/constants/site-config.ts');  
 export type ProductBadge =
   | 'novo'
   | 'oferta'
@@ -49,6 +53,7 @@ export type ProductBadge =
   | 'lancamento'
   | null;
 
+  console.log('Tipos ProductCategory e ProductBadge definidos, origem dos tipos: /src/constants/site-config.ts');
 export interface Product {
   sku:         string;        // Identificador único. Ex: 'PROD001'
   name:        string;
@@ -65,6 +70,7 @@ export interface Product {
   specs?: Record<string, string>; // Especificações técnicas opcionais
 }
 
+console.log('Tipo Product definido, origem do tipo: /src/constants/site-config.ts');
 export interface Banner {
   id:           string;
   title:        string;
@@ -79,6 +85,7 @@ export interface Banner {
 
 // ── Produtos ───────────────────────────────────────────────────────
 // Edite aqui para gerenciar o catálogo inteiro.
+console.log('Constante PRODUCTS definida, origem da constante: /src/constants/site-config.ts');
 export const PRODUCTS: Product[] = [
   {
     sku:         'PROD001',
@@ -221,6 +228,7 @@ export const PRODUCTS: Product[] = [
 ];
 
 // ── Banners ────────────────────────────────────────────────────────
+console.log('Constante BANNERS definida, origem da constante: /src/constants/site-config.ts');
 export const BANNERS: Banner[] = [
   {
     id:           'banner-principal',
@@ -247,6 +255,7 @@ export const BANNERS: Banner[] = [
 ];
 
 // ── Categorias (para filtro na vitrine) ───────────────────────────
+console.log('Constante CATEGORIES definida, origem da constante: /src/constants/site-config.ts');
 export const CATEGORIES: Array<{ value: ProductCategory | 'todos'; label: string; icon: string }> = [
   { value: 'todos',      label: 'Todos',       icon: '⊞' },
   { value: 'esporte',    label: 'Esporte',     icon: '⚡' },
@@ -260,11 +269,13 @@ export const CATEGORIES: Array<{ value: ProductCategory | 'todos'; label: string
 
 /** Busca produto pelo SKU. Retorna undefined se não existir. */
 export function getProductBySku(sku: string): Product | undefined {
+  console.log('Função getProductBySku chamada, origem da função: /src/constants/site-config.ts:', sku);
   return PRODUCTS.find(p => p.sku === sku);
 }
 
 /** Formata centavos para BRL. Ex: 19990 → "R$ 199,90" */
 export function formatPrice(cents: number): string {
+  console.log('Função formatPrice chamada, origem da função: /src/constants/site-config.ts:', cents);
   return new Intl.NumberFormat('pt-BR', {
     style:    'currency',
     currency: 'BRL',
@@ -273,18 +284,23 @@ export function formatPrice(cents: number): string {
 
 /** Calcula % de desconto entre preço original e atual */
 export function calcDiscount(original: number, current: number): number {
+  console.log('Função calcDiscount chamada, origem da função: /src/constants/site-config.ts:');
   return Math.round((1 - current / original) * 100);
 }
 
 /** Gera URL completa da imagem de produto */
 export function getProductImageUrl(imageName: string): string {
+  console.log('Função getProductImageUrl chamada, origem da função: /src/constants/site-config.ts:', imageName);
   return `${IMAGE_BASE_URL}/${imageName}`;
 }
 
 /** Gera link WhatsApp com mensagem codificada */
-export function getWhatsAppLink(message?: string): string {
+export function getWhatsAppLink(message?: string, settings?: { number: string; message: string }): string {
+  const whatsappNumber = settings?.number || SITE_INFO.whatsapp.number;
+  const defaultMessage = settings?.message || SITE_INFO.whatsapp.message;
+  
   const msg = encodeURIComponent(
-    message ?? SITE_INFO.whatsapp.message
+    message ?? defaultMessage
   );
-  return `https://wa.me/${SITE_INFO.whatsapp.number}?text=${msg}`;
+  return `https://wa.me/${whatsappNumber}?text=${msg}`;
 }

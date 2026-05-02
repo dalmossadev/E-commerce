@@ -3,19 +3,17 @@
  * @description Página 404 — tema Neon.
  * Exibida automaticamente pelo Next.js quando a rota não existe.
  */
+'use client';
 
-import type { Metadata } from 'next';
 import Link   from 'next/link';
 import { Home, MessageCircle, Search } from 'lucide-react';
 import { Button }      from '@/components/ui/Button';
-import { SITE_INFO, getWhatsAppLink } from '@/constants/site-config';
-
-export const metadata: Metadata = {
-  title:  '404 — Página não encontrada',
-  robots: { index: false },
-};
+import { getWhatsAppLink } from '@/constants/site-config';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export default function NotFound() {
+  const settings = useSettings();
+
   return (
     <div
       className="min-h-screen bg-brand-background flex items-center justify-center
@@ -76,7 +74,7 @@ export default function NotFound() {
 
         <p className="text-brand-muted text-sm sm:text-base leading-relaxed mb-10">
           O endereço que você acessou não foi encontrado em{' '}
-          <span className="text-brand-primary font-mono">{SITE_INFO.name}</span>.
+          <span className="text-brand-primary font-mono">{settings.site_name}</span>.
           Verifique o link ou volte para a loja.
         </p>
 
@@ -104,7 +102,7 @@ export default function NotFound() {
 
           <Button
             as="a"
-            href={getWhatsAppLink('Olá! Preciso de ajuda para encontrar um produto.')}
+            href={getWhatsAppLink('Olá! Preciso de ajuda para encontrar um produto.', { number: settings.whatsapp_number, message: settings.whatsapp_message })}
             target="_blank"
             variant="ghost"
             size="md"
@@ -116,7 +114,7 @@ export default function NotFound() {
 
         {/* Rodapé */}
         <p className="font-mono text-brand-muted/40 text-xs mt-12 tracking-widest">
-          {SITE_INFO.name} · error_code: 404 · page_not_found
+          {settings.site_name} · error_code: 404 · page_not_found
         </p>
       </div>
     </div>

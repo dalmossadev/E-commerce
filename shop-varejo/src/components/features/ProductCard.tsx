@@ -26,7 +26,11 @@ import { Badge }              from '@/components/ui/Badge';
 import { ImageWithFallback }  from '@/components/ui/ImageWithFallback';
 import { cn }                 from '@/lib/utils';
 import { useWishlist }        from '@/hooks/useWishlist';
+import { useWishlistFlow }   from '@/hooks/useWishlistFlow';
 import { LeadInterestModal }  from '@/components/LeadInterestModal';
+import { WishlistQuickModal } from '@/components/WishlistQuickModal';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
 
 // ── Props ──────────────────────────────────────────────────────────
 type ProductCardProps = {
@@ -39,7 +43,7 @@ type ProductCardProps = {
     originalPrice?: number;  // centavos
     imageName: string;
     altText: string;
-    imageUrl?: string;  // URL completa vinda do backend: http://localhost:3001/img/catalogo/arquivo.webp
+    imageUrl?: string;  // URL completa vinda do backend: http://localhost:3000/img/catalogo/arquivo.webp
     category: string;
     badge?: string | null;
     inStock: boolean;
@@ -92,10 +96,13 @@ function ProductNotFound({ sku }: { sku: string }) {
 export function ProductCard({ product: propProduct, sku, className }: ProductCardProps) {
   const [showSpecs, setShowSpecs] = useState(false);
   const [showLeadModal, setShowLeadModal] = useState(false);
-  const { toggleWishlist, isInWishlist } = useWishlist();
 
   // Support props.product (API data)
   const product = propProduct;
+
+  const { handleHeartClick, isInWishlist, isModalOpen, closeModal, handleModalSuccess, currentProduct } = useWishlistFlow();
+  const { user } = useAuth();
+  const settings = useSettings();
 
   // ── Graceful Degradation: produto não encontrado ─────────────────────
   if (!product) {
@@ -116,15 +123,17 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
   const inStock       = product?.inStock        ?? false;
   const specs         = (product as any)?.specs as Record<string, string> | undefined;
 
-  // imageSrc: constrói a partir de imageName (Next.js serve public/ na raiz)
-  const imageSrc = imageName
-    ? `/img/catalogo/${imageName}`
-    : '/img/catalogo/produto-default.webp';
+   // imageSrc: caminho relativo para o frontend servir as imagens da pasta public
+   // imageName já vem com extensão do banco de dados
+   const imageSrc = imageName
+     ? `/img/catalogo/${imageName}`
+     : '/img/catalogo/produto-default.webp';
 
   const discountPct   = originalPrice ? calcDiscount(originalPrice, basePrice) : null;
 
   const waLink = getWhatsAppLink(
-    `Olá! Tenho interesse no produto *${name}* (SKU: ${sku || 'N/A'}). Pode me ajudar?`
+    `Olá! Tenho interesse no produto *${name}* (SKU: ${sku || 'N/A'}). Pode me ajudar?`,
+    { number: settings.whatsapp_number, message: settings.whatsapp_message }
   );
 
   const handleWhatsAppClick = () => {
@@ -197,19 +206,26 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
         {/* Wishlist + Quick actions no hover */}
         {inStock && (
           <div className="absolute top-3 right-3 z-30 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                toggleWishlist(sku || '');
-              }}
-              className="p-2 bg-black/80 backdrop-blur-sm rounded-full hover:bg-brand-primary/20 transition-colors"
-              aria-label={isInWishlist(sku || '') ? 'Remover da wishlist' : 'Adicionar à wishlist'}
-            >
-              <Heart
-                size={16}
-                className={isInWishlist(sku || '') ? 'fill-red-500 text-red-500' : 'text-white'}
-              />
-            </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const skuValue = product?.sku || '';
+                    if (product?.id && product?.name) {
+                      handleHeartClick({ 
+                        id: product.id, 
+                        name: product.name, 
+                        sku: skuValue 
+                      });
+                    }
+                  }}
+                  className="p-2 bg-black/80 backdrop-blur-sm hover:bg-brand-primary/20 transition-colors"
+                  aria-label={isInWishlist(product?.sku || '') ? 'Remover da wishlist' : 'Adicionar à wishlist'}
+                >
+                  <Heart
+                    size={16}
+                    className={isInWishlist(product?.sku || '') ? 'fill-[#00FF00] text-[#00FF00]' : 'text-white'}
+                  />
+                </button>
           </div>
         )}
 
@@ -284,11 +300,11 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
             </button>
 
             {showSpecs && (
-              <div
-                id={`specs-${sku}`}
-                className="mt-2 p-2 bg-brand-background/60 rounded-lg
-                           border border-brand-border"
-              >
+                 <div
+                 id={`specs-${sku}`}
+                 className="mt-2 p-2 bg-brand-background/60
+                            border border-brand-border"
+               >
                 {Object.entries(specs).map(([k, v]) => (
                   <SpecRow key={k} label={k} value={v} />
                 ))}
@@ -320,6 +336,20 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
           isOpen={showLeadModal}
           onClose={() => setShowLeadModal(false)}
         />
+
+        {/* Wishlist Quick Modal */}
+        {currentProduct && (
+          <WishlistQuickModal
+            productName={currentProduct.name || ''}
+            sku={currentProduct.sku || ''}
+            productId={currentProduct.id}
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            onSuccess={handleModalSuccess}
+            initialName={user?.name || ''}
+            initialEmail={user?.email || ''}
+          />
+        )}
       </div>
     </article>
   );

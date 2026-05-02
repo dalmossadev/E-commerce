@@ -5,6 +5,10 @@ import { ISupplierRepository } from '@core/interfaces/ISupplierRepository';
 import { IOrderRepository } from '@core/interfaces/IOrderRepository';
 import { IPurchaseRepository } from '@core/interfaces/IPurchaseRepository';
 import { IAuditRepository } from '@core/interfaces/IAuditRepository';
+import { ICampaignRepository } from '@core/interfaces/ICampaignRepository';
+import { ICustomerRepository } from '@core/interfaces/ICustomerRepository';
+import { ISettingsRepository } from '@core/interfaces/ISettingsRepository';
+import { IWishlistRepository } from '@core/interfaces/IWishlistRepository';
 import { TypeORMLeadRepository } from '@infrastructure/database/repositories/TypeORMLeadRepository';
 import { TypeORMProductRepository } from '@infrastructure/database/repositories/TypeORMProductRepository';
 import { TypeORMUserRepository } from '@infrastructure/database/repositories/TypeORMUserRepository';
@@ -12,6 +16,10 @@ import { TypeORMSupplierRepository } from '@infrastructure/database/repositories
 import { TypeORMOrderRepository } from '@infrastructure/database/repositories/TypeORMOrderRepository';
 import { TypeORMPurchaseRepository } from '@infrastructure/database/repositories/TypeORMPurchaseRepository';
 import { TypeORMAuditRepository } from '@infrastructure/database/repositories/TypeORMAuditRepository';
+import { TypeORMCampaignRepository } from '@infrastructure/database/repositories/TypeORMCampaignRepository';
+import { TypeORMCustomerRepository } from '@infrastructure/database/repositories/TypeORMCustomerRepository';
+import { TypeORMSettingsRepository } from '@infrastructure/database/repositories/TypeORMSettingsRepository';
+import { TypeORMWishlistRepository } from '@infrastructure/database/repositories/TypeORMWishlistRepository';
 import { CreateLeadUseCase, ListLeadsUseCase, GetLeadByIdUseCase, UpdateLeadStatusUseCase, DeleteLeadUseCase, CountLeadsUseCase } from '@core/use-cases/LeadUseCases';
 import { ListProductsUseCase } from '@core/use-cases/ListProductsUseCase';
 import { CreateProductUseCase } from '@core/use-cases/CreateProductUseCase';
@@ -25,6 +33,15 @@ import { CreatePurchaseOrderUseCase, UpdatePurchaseStatusUseCase } from '@core/u
 import { ReceiveInventoryUseCase } from '@core/use-cases/procurement/ReceiveInventoryUseCase';
 import { ListPurchasesUseCase, GetPurchaseByIdUseCase, DeletePurchaseUseCase } from '@core/use-cases/procurement/ListPurchasesUseCase';
 import { RefreshTokenUseCase } from '@core/use-cases/auth/RefreshTokenUseCase';
+import { UploadProductImageUseCase } from '@core/use-cases/catalog/UploadProductImageUseCase';
+import { CreateCampaignUseCase, ListCampaignsUseCase, GetCampaignByIdUseCase, GetCampaignBySlugUseCase, UpdateCampaignUseCase, DeleteCampaignUseCase } from '@core/use-cases/campaign/CampaignUseCases';
+import { CreateCustomerUseCase, ListCustomersUseCase, GetCustomerByIdUseCase, UpdateCustomerUseCase, DeleteCustomerUseCase } from '@core/use-cases/customers/CustomerUseCases';
+import { GetSettingByKeyUseCase, ListSettingsUseCase, CreateSettingsUseCase, UpdateSettingsUseCase, DeleteSettingsUseCase } from '@core/use-cases/settings/SettingsUseCases';
+import { GetSettingsUseCase } from '@core/use-cases/settings/GetSettingsUseCase';
+import { GetSiteInfoUseCase, UpdateSiteInfoUseCase } from '@core/use-cases/settings/SiteInfoUseCases';
+import { GetVariantHistoryBySkuUseCase, GetAllVariantHistoryUseCase } from '@core/use-cases/product-history/VariantHistoryUseCases';
+import { GetProductsByRegionUseCase } from '@core/use-cases/product/GetProductsByRegionUseCase';
+import { AddProductToWishlistUseCase, RemoveProductFromWishlistUseCase, GetUserWishlistUseCase } from '@core/use-cases/wishlist/WishlistUseCases';
 import { SkuService } from '@core/domain/services/SkuService';
 import { DiscountService } from '@core/domain/services/DiscountService';
 import { authService } from '@infrastructure/auth/AuthService';
@@ -114,6 +131,10 @@ export const leadRepositoryToken = 'ILeadRepository';
 export const orderRepositoryToken = 'IOrderRepository';
 export const purchaseRepositoryToken = 'IPurchaseRepository';
 export const auditRepositoryToken = 'IAuditRepository';
+export const campaignRepositoryToken = 'ICampaignRepository';
+export const customerRepositoryToken = 'ICustomerRepository';
+export const settingsRepositoryToken = 'ISettingsRepository';
+export const wishlistRepositoryToken = 'IWishlistRepository';
 export const skuServiceToken = 'SkuService';
 export const authServiceToken = 'AuthService';
 export const discountServiceToken = 'DiscountService';
@@ -125,6 +146,10 @@ Container.registerSingleton(leadRepositoryToken, () => new TypeORMLeadRepository
 Container.registerSingleton(orderRepositoryToken, () => new TypeORMOrderRepository());
 Container.registerSingleton(purchaseRepositoryToken, () => new TypeORMPurchaseRepository());
 Container.registerSingleton(auditRepositoryToken, () => new TypeORMAuditRepository(AppDataSource.getRepository(AuditLogModel)));
+Container.registerSingleton(campaignRepositoryToken, () => new TypeORMCampaignRepository());
+Container.registerSingleton(customerRepositoryToken, () => new TypeORMCustomerRepository());
+Container.registerSingleton(settingsRepositoryToken, () => new TypeORMSettingsRepository());
+Container.registerSingleton(wishlistRepositoryToken, () => new TypeORMWishlistRepository());
 Container.registerSingleton(skuServiceToken, () => new SkuService());
 Container.registerSingleton(authServiceToken, () => authService);
 Container.registerSingleton(discountServiceToken, () => new DiscountService(Container.resolve<IAuditRepository>(auditRepositoryToken)));
@@ -138,13 +163,22 @@ Container.registerSingleton('DeleteProductUseCase', () => new DeleteProductUseCa
   Container.resolve(orderRepositoryToken)
 ));
 
+Container.registerSingleton('UploadProductImageUseCase', () => new UploadProductImageUseCase(
+  Container.resolve(productRepositoryToken)
+));
+
 Container.registerSingleton('CreateLeadUseCase', () => new CreateLeadUseCase(
   Container.resolve(leadRepositoryToken),
-  Container.resolve(productRepositoryToken)
+  Container.resolve(productRepositoryToken),
+  Container.resolve(userRepositoryToken),
+  Container.resolve<AddProductToWishlistUseCase>('AddProductToWishlistUseCase')
 ));
 Container.registerSingleton('ListLeadsUseCase', () => new ListLeadsUseCase(Container.resolve(leadRepositoryToken)));
 Container.registerSingleton('GetLeadByIdUseCase', () => new GetLeadByIdUseCase(Container.resolve(leadRepositoryToken)));
-Container.registerSingleton('UpdateLeadStatusUseCase', () => new UpdateLeadStatusUseCase(Container.resolve(leadRepositoryToken)));
+Container.registerSingleton('UpdateLeadStatusUseCase', () => new UpdateLeadStatusUseCase(
+  Container.resolve(leadRepositoryToken),
+  Container.resolve(auditRepositoryToken)
+));
 Container.registerSingleton('DeleteLeadUseCase', () => new DeleteLeadUseCase(Container.resolve(leadRepositoryToken)));
 Container.registerSingleton('CountLeadsUseCase', () => new CountLeadsUseCase(Container.resolve(leadRepositoryToken)));
 
@@ -190,6 +224,44 @@ Container.registerSingleton('ReceiveInventoryUseCase', () => new ReceiveInventor
 ));
 Container.registerSingleton('DeletePurchaseUseCase', () => new DeletePurchaseUseCase(Container.resolve(purchaseRepositoryToken)));
 
+Container.registerSingleton('CreateCampaignUseCase', () => new CreateCampaignUseCase(Container.resolve(campaignRepositoryToken)));
+Container.registerSingleton('ListCampaignsUseCase', () => new ListCampaignsUseCase(Container.resolve(campaignRepositoryToken)));
+Container.registerSingleton('GetCampaignByIdUseCase', () => new GetCampaignByIdUseCase(Container.resolve(campaignRepositoryToken)));
+Container.registerSingleton('GetCampaignBySlugUseCase', () => new GetCampaignBySlugUseCase(Container.resolve(campaignRepositoryToken)));
+Container.registerSingleton('UpdateCampaignUseCase', () => new UpdateCampaignUseCase(Container.resolve(campaignRepositoryToken)));
+Container.registerSingleton('DeleteCampaignUseCase', () => new DeleteCampaignUseCase(Container.resolve(campaignRepositoryToken)));
+
+Container.registerSingleton('CreateCustomerUseCase', () => new CreateCustomerUseCase(Container.resolve(customerRepositoryToken)));
+Container.registerSingleton('ListCustomersUseCase', () => new ListCustomersUseCase(Container.resolve(customerRepositoryToken)));
+Container.registerSingleton('GetCustomerByIdUseCase', () => new GetCustomerByIdUseCase(Container.resolve(customerRepositoryToken)));
+Container.registerSingleton('UpdateCustomerUseCase', () => new UpdateCustomerUseCase(Container.resolve(customerRepositoryToken)));
+Container.registerSingleton('DeleteCustomerUseCase', () => new DeleteCustomerUseCase(Container.resolve(customerRepositoryToken)));
+
+Container.registerSingleton('GetSettingByKeyUseCase', () => new GetSettingByKeyUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('GetSettingsUseCase', () => new GetSettingsUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('ListSettingsUseCase', () => new ListSettingsUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('CreateSettingsUseCase', () => new CreateSettingsUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('UpdateSettingsUseCase', () => new UpdateSettingsUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('DeleteSettingsUseCase', () => new DeleteSettingsUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('GetSiteInfoUseCase', () => new GetSiteInfoUseCase(Container.resolve(settingsRepositoryToken)));
+Container.registerSingleton('UpdateSiteInfoUseCase', () => new UpdateSiteInfoUseCase(Container.resolve(settingsRepositoryToken)));
+
+Container.registerSingleton('GetVariantHistoryBySkuUseCase', () => new GetVariantHistoryBySkuUseCase());
+Container.registerSingleton('GetAllVariantHistoryUseCase', () => new GetAllVariantHistoryUseCase());
+Container.registerSingleton('GetProductsByRegionUseCase', () => new GetProductsByRegionUseCase(Container.resolve(productRepositoryToken)));
+
+Container.registerSingleton('AddProductToWishlistUseCase', () => new AddProductToWishlistUseCase(
+  Container.resolve<IWishlistRepository>(wishlistRepositoryToken),
+  Container.resolve<IProductRepository>(productRepositoryToken),
+  Container.resolve<IUserRepository>(userRepositoryToken)
+));
+Container.registerSingleton('RemoveProductFromWishlistUseCase', () => new RemoveProductFromWishlistUseCase(
+  Container.resolve<IWishlistRepository>(wishlistRepositoryToken)
+));
+Container.registerSingleton('GetUserWishlistUseCase', () => new GetUserWishlistUseCase(
+  Container.resolve<IWishlistRepository>(wishlistRepositoryToken)
+));
+
 export const container = {
   leadRepository: () => Container.resolve<ILeadRepository>(leadRepositoryToken),
   productRepository: () => Container.resolve<IProductRepository>(productRepositoryToken),
@@ -202,6 +274,7 @@ export const container = {
   discountService: () => Container.resolve<DiscountService>(discountServiceToken),
   
   createLeadUseCase: () => Container.resolve<CreateLeadUseCase>('CreateLeadUseCase'),
+  addProductToWishlistUseCase: () => Container.resolve<AddProductToWishlistUseCase>('AddProductToWishlistUseCase'),
   listLeadsUseCase: () => Container.resolve<ListLeadsUseCase>('ListLeadsUseCase'),
   getLeadByIdUseCase: () => Container.resolve<GetLeadByIdUseCase>('GetLeadByIdUseCase'),
   updateLeadStatusUseCase: () => Container.resolve<UpdateLeadStatusUseCase>('UpdateLeadStatusUseCase'),
@@ -213,6 +286,7 @@ export const container = {
   getProductBySkuUseCase: () => Container.resolve<GetProductBySkuUseCase>('GetProductBySkuUseCase'),
   updateProductUseCase: () => Container.resolve<UpdateProductUseCase>('UpdateProductUseCase'),
   deleteProductUseCase: () => Container.resolve<DeleteProductUseCase>('DeleteProductUseCase'),
+  uploadProductImageUseCase: () => Container.resolve<UploadProductImageUseCase>('UploadProductImageUseCase'),
   
   authUseCases: () => Container.resolve<AuthUseCases>('AuthUseCases'),
   refreshTokenUseCase: () => Container.resolve<RefreshTokenUseCase>('RefreshTokenUseCase'),
@@ -235,4 +309,38 @@ export const container = {
   updatePurchaseStatusUseCase: () => Container.resolve<UpdatePurchaseStatusUseCase>('UpdatePurchaseStatusUseCase'),
   receiveInventoryUseCase: () => Container.resolve<ReceiveInventoryUseCase>('ReceiveInventoryUseCase'),
   deletePurchaseUseCase: () => Container.resolve<DeletePurchaseUseCase>('DeletePurchaseUseCase'),
+
+  campaignRepository: () => Container.resolve<ICampaignRepository>(campaignRepositoryToken),
+  customerRepository: () => Container.resolve<ICustomerRepository>(customerRepositoryToken),
+  settingsRepository: () => Container.resolve<ISettingsRepository>(settingsRepositoryToken),
+
+  createCampaignUseCase: () => Container.resolve<CreateCampaignUseCase>('CreateCampaignUseCase'),
+  listCampaignsUseCase: () => Container.resolve<ListCampaignsUseCase>('ListCampaignsUseCase'),
+  getCampaignByIdUseCase: () => Container.resolve<GetCampaignByIdUseCase>('GetCampaignByIdUseCase'),
+  getCampaignBySlugUseCase: () => Container.resolve<GetCampaignBySlugUseCase>('GetCampaignBySlugUseCase'),
+  updateCampaignUseCase: () => Container.resolve<UpdateCampaignUseCase>('UpdateCampaignUseCase'),
+  deleteCampaignUseCase: () => Container.resolve<DeleteCampaignUseCase>('DeleteCampaignUseCase'),
+
+  createCustomerUseCase: () => Container.resolve<CreateCustomerUseCase>('CreateCustomerUseCase'),
+  listCustomersUseCase: () => Container.resolve<ListCustomersUseCase>('ListCustomersUseCase'),
+  getCustomerByIdUseCase: () => Container.resolve<GetCustomerByIdUseCase>('GetCustomerByIdUseCase'),
+  updateCustomerUseCase: () => Container.resolve<UpdateCustomerUseCase>('UpdateCustomerUseCase'),
+  deleteCustomerUseCase: () => Container.resolve<DeleteCustomerUseCase>('DeleteCustomerUseCase'),
+
+  getSettingByKeyUseCase: () => Container.resolve<GetSettingByKeyUseCase>('GetSettingByKeyUseCase'),
+  getSettingsUseCase: () => Container.resolve<GetSettingsUseCase>('GetSettingsUseCase'),
+  listSettingsUseCase: () => Container.resolve<ListSettingsUseCase>('ListSettingsUseCase'),
+  createSettingsUseCase: () => Container.resolve<CreateSettingsUseCase>('CreateSettingsUseCase'),
+  updateSettingsUseCase: () => Container.resolve<UpdateSettingsUseCase>('UpdateSettingsUseCase'),
+  deleteSettingsUseCase: () => Container.resolve<DeleteSettingsUseCase>('DeleteSettingsUseCase'),
+  getSiteInfoUseCase: () => Container.resolve<GetSiteInfoUseCase>('GetSiteInfoUseCase'),
+  updateSiteInfoUseCase: () => Container.resolve<UpdateSiteInfoUseCase>('UpdateSiteInfoUseCase'),
+
+  getVariantHistoryBySkuUseCase: () => Container.resolve<GetVariantHistoryBySkuUseCase>('GetVariantHistoryBySkuUseCase'),
+  getAllVariantHistoryUseCase: () => Container.resolve<GetAllVariantHistoryUseCase>('GetAllVariantHistoryUseCase'),
+
+  wishlistRepository: () => Container.resolve<IWishlistRepository>(wishlistRepositoryToken),
+  addToWishlistUseCase: () => Container.resolve<AddProductToWishlistUseCase>('AddProductToWishlistUseCase'),
+  removeFromWishlistUseCase: () => Container.resolve<RemoveProductFromWishlistUseCase>('RemoveProductFromWishlistUseCase'),
+  getUserWishlistUseCase: () => Container.resolve<GetUserWishlistUseCase>('GetUserWishlistUseCase'),
 };
