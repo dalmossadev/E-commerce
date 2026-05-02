@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const protectedRoutes = ['/checkout', '/orders', '/dashboard', '/admin'];
-const publicRoutes = ['/', '/produtos', '/login', '/register', '/api/auth'];
+const protectedRoutes = ['/checkout', '/orders', '/admin'];
+const publicRoutes = ['/', '/produtos', '/login', '/register', '/api/auth/*', '/wishlist'];
 
 function isProtectedRoute(pathname: string): boolean {
   return protectedRoutes.some((route) => {
@@ -17,7 +17,7 @@ function isPublicRoute(pathname: string): boolean {
     if (route.endsWith('/*')) {
       return pathname.startsWith(route.slice(0, -1));
     }
-    return pathname === route || pathname.startsWith(`${route}/`);
+    return pathname === route || pathname.startsWith(`${route}/`) || pathname === `${route}`;
   });
 }
 

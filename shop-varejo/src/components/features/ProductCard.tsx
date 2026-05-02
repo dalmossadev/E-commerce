@@ -15,7 +15,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ShoppingBag, AlertTriangle, ExternalLink, Info, Heart, MapPin, Clock } from 'lucide-react';
 import {
   getWhatsAppLink,
@@ -214,7 +214,9 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
                       handleHeartClick({ 
                         id: product.id, 
                         name: product.name, 
-                        sku: skuValue 
+                        sku: skuValue,
+                        price: basePrice,
+                        imageName: imageName
                       });
                     }
                   }}
@@ -231,7 +233,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
 
         {/* CTA overlay no hover */}
         {inStock && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <div className="absolute bottom-0 left-0 right-0 p-4 z-20 flex flex-col gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                 <Button
                   as="a"
                   href={waLink}

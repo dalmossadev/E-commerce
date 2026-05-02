@@ -98,7 +98,7 @@ export function Button({
     // Base
     'inline-flex items-center justify-center',
     'font-display font-bold tracking-wider uppercase',
-    'rounded-lg transition-all duration-200',
+    'transition-all duration-200',
     'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
     'select-none',
     // Responsivo: full width no mobile

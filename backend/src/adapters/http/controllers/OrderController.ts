@@ -20,7 +20,7 @@ export class OrderController {
   private cancelOrderUseCase: CancelOrderUseCase;
   private listOrdersUseCase: ListOrdersUseCase;
   private getOrderByIdUseCase: GetOrderByIdUseCase;
-  private discountService: DiscountService;
+  private discountService?: DiscountService;
 
   constructor() {
     this.createOrderUseCase = container.createOrderUseCase();
@@ -28,7 +28,13 @@ export class OrderController {
     this.cancelOrderUseCase = container.cancelOrderUseCase();
     this.listOrdersUseCase = container.listOrdersUseCase();
     this.getOrderByIdUseCase = container.getOrderByIdUseCase();
-    this.discountService = container.discountService();
+  }
+
+  private getDiscountService(): DiscountService {
+    if (!this.discountService) {
+      this.discountService = container.discountService();
+    }
+    return this.discountService;
   }
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -152,7 +158,7 @@ export class OrderController {
       order.applyDiscount(data.discountAmount);
 
       if (oldDiscount !== order.discount) {
-        const discountService = container.discountService();
+        const discountService = this.getDiscountService();
         const user = (req as any).user;
         const discountPercent = order.subtotal > 0 ? Math.round(order.discount / order.subtotal * 100) : 0;
 

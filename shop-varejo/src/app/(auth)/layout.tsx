@@ -10,7 +10,20 @@ export default async function AuthLayout({
   const sessionToken = cookieStore.get('__session')?.value;
 
   if (sessionToken) {
-    redirect('/');
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+
+      if (response.ok) {
+        redirect('/');
+      }
+    } catch {
+      // Token inválido, permite acesso às páginas de auth
+    }
   }
 
   return (

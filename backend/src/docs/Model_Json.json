@@ -1,0 +1,11 @@
+
+
+ {
+  "customerName": "Tiatira Melo",
+  "customerPhone": "71987833065",
+  "customerEmail": "dalmossa@gmail.com",
+  "status": "PENDING",
+  "notes": "string",
+  "productId": "001",
+  "variantId": "03"
+}

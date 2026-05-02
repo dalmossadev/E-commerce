@@ -4,6 +4,7 @@ import { Product } from '@core/domain/Product';
 import { ProductVariant } from '@core/domain/ProductVariant';
 import { Order, OrderStatus, OrderItem } from '@core/domain/Order';
 import { Purchase, PurchaseStatus, PurchaseItem } from '@core/domain/Purchase';
+import { Campaign } from '@core/domain/Campaign';
 
 describe('Performance & Cache Tests', () => {
   let skuService: SkuService;
@@ -371,6 +372,27 @@ describe('Performance & Cache Tests', () => {
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(50);
+    });
+  });
+
+  describe('Campaign Entity Performance', () => {
+    it('should create 1000 Campaign entities in under 100ms', () => {
+      const startTime = Date.now();
+
+      for (let i = 0; i < 1000; i++) {
+        const campaign = new Campaign({
+          name: `Campaign ${i}`,
+          slug: `campaign-${i}`,
+          messageTemplate: `Message template ${i}`,
+          isActive: i % 2 === 0,
+          targetUrl: i % 3 === 0 ? `https://example.com/${i}` : undefined
+        });
+      }
+
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+
+      expect(duration).toBeLessThan(100);
     });
   });
 });

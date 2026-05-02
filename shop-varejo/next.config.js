@@ -5,12 +5,6 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3001',
-        pathname: '/img/catalogo/**',
-      },
     ],
     formats: ['image/webp', 'image/avif'],
     qualities: [75, 80, 85],

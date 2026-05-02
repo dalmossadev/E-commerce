@@ -14,6 +14,7 @@ export class Lead {
   notes?: string;
   productId?: number;
   variantId?: number;
+  userId?: number;
   createdAt!: Date;
   updatedAt!: Date;
 

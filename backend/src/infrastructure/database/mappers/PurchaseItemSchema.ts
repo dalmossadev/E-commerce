@@ -14,6 +14,8 @@ export const PurchaseItemSchema = new EntitySchema<PurchaseItem>({
     size: { type: "varchar", length: 20, nullable: true },
     quantity: { type: "int", default: 0 },
     unitCost: { type: "bigint", default: 0 },
-    totalCost: { type: "bigint", default: 0 }
-  }
+    totalCost: { type: "bigint", default: 0 },
+    createdAt: { type: "timestamp", createDate: true },
+    updatedAt: { type: "timestamp", updateDate: true },
+  },
 });

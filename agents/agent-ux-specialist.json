@@ -1,0 +1,46 @@
+{
+  "$schema": "https://opencode.ai/schemas/agents.json",
+  "version": "1.0",
+  "agent": {
+    "id": "agent-ux-specialist",
+    "name": "Agent UX Specialist — User Experience",
+    "model": "claude-sonnet-4-20250514",
+    "description": "Especialista em experiência do usuário. Otimiza fluxos de navegação, usabilidade e acessibilidade do frontend.",
+    "context": {
+      "files": [
+        "shop-varejo/src/app/page.tsx",
+        "shop-varejo/src/components/layout/Header.tsx",
+        "shop-varejo/src/components/layout/Footer.tsx",
+        "shop-varejo/src/components/features/FloatingWhatsApp.tsx",
+        "shop-varejo/src/app/admin/site-info/page.tsx"
+      ],
+      "instructions": [
+        "Analisar fluxos de navegação e identificar pontos de fricção para o usuário.",
+        "Garantir que o site seja totalmente acessível (WCAG 2.1 AA): uso correto de aria-labels, roles, navegação por teclado.",
+        "Otimizar a experiência mobile: menu hambúrguer, toques grandes, scroll suave.",
+        "Melhorar a experiência do admin/site-info: tornar mais intuitivo para usuários não-técnicos.",
+        "Implementar feedback visual para ações (loading, success, error) usando Tailwind."
+      ]
+    },
+    "tasks": [
+      {
+        "id": "ux-audit-site-info",
+        "description": "Auditar e melhorar a usabilidade da página admin/site-info para leigos",
+        "output": ["shop-varejo/src/app/admin/site-info/page.tsx"]
+      },
+      {
+        "id": "accessibility-header",
+        "description": "Melhorar acessibilidade do Header e menu mobile",
+        "output": ["shop-varejo/src/components/layout/Header.tsx"]
+      },
+      {
+        "id": "mobile-experience",
+        "description": "Otimizar experiência mobile em todas as páginas",
+        "output": [
+          "shop-varejo/src/components/layout/Header.tsx",
+          "shop-varejo/src/app/page.tsx"
+        ]
+      }
+    ]
+  }
+}

@@ -5,8 +5,29 @@ import { CreateProductUseCase } from '@core/use-cases/CreateProductUseCase';
 import { UpdateProductInput } from '@core/use-cases/catalog/UpdateProductUseCase';
 import { UpdateProductUseCase } from '@core/use-cases/catalog/UpdateProductUseCase';
 import { DeleteProductUseCase } from '@core/use-cases/catalog/DeleteProductUseCase';
+import { UploadProductImageUseCase } from '@core/use-cases/catalog/UploadProductImageUseCase';
+import { ProductResponseDTO } from '@core/dto/ProductDTO';
 import { ProductData } from '@core/interfaces/IProductSKU';
 import { ProductQueryOptions } from '@core/interfaces/IProductRepository';
+
+function mapProductToDTO(product: any): ProductResponseDTO {
+  return {
+    id: product.id,
+    name: product.name,
+    brand: product.brand,
+    category: product.category,
+    basePrice: product.basePrice,
+    description: product.description,
+    originalPrice: product.originalPrice,
+    badge: product.badge,
+    specs: product.specs,
+    featured: product.featured ?? false,
+    inStock: product.inStock ?? true,
+    imageName: product.imageName,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  };
+}
 
 export class ProductController {
   constructor(
@@ -14,7 +35,8 @@ export class ProductController {
     private getProductBySkuUseCase: GetProductBySkuUseCase,
     private createProductUseCase: CreateProductUseCase,
     private updateProductUseCase: UpdateProductUseCase,
-    private deleteProductUseCase: DeleteProductUseCase
+    private deleteProductUseCase: DeleteProductUseCase,
+    private uploadImageUseCase?: UploadProductImageUseCase
   ) {}
 
   async handle(req: Request, res: Response, next: NextFunction) {
@@ -32,7 +54,10 @@ export class ProductController {
       };
 
       const result = await this.listProductsUseCase.execute(queryOptions);
-      res.json(result);
+      res.json({
+        ...result,
+        data: result.data.map(mapProductToDTO)
+      });
     } catch (error) {
       next(error);
     }
@@ -45,7 +70,7 @@ export class ProductController {
       if (!product) {
         return res.status(404).json({ message: 'Product not found' });
       }
-      res.json(product);
+      res.json(mapProductToDTO(product));
     } catch (error) {
       next(error);
     }
@@ -55,7 +80,7 @@ export class ProductController {
     try {
       const productData: ProductData = req.body;
       const product = await this.createProductUseCase.execute(productData);
-      res.status(201).json(product);
+      res.status(201).json(mapProductToDTO(product));
     } catch (error) {
       next(error);
     }
@@ -66,7 +91,7 @@ export class ProductController {
       const sku = req.params.sku as string;
       const productData: UpdateProductInput = req.body;
       const product = await this.updateProductUseCase.execute(sku, productData);
-      res.json(product);
+      res.json(mapProductToDTO(product));
     } catch (error) {
       next(error);
     }
@@ -77,6 +102,22 @@ export class ProductController {
       const sku = req.params.sku as string;
       await this.deleteProductUseCase.execute(sku);
       res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async uploadImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const sku = req.params.sku as string;
+      const file = req.file as Express.Multer.File;
+
+      if (!file) {
+        return res.status(400).json({ message: 'Nenhuma imagem enviada' });
+      }
+
+      const imageUrl = await this.uploadImageUseCase!.execute(sku, file);
+      res.json({ imageUrl });
     } catch (error) {
       next(error);
     }

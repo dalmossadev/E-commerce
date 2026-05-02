@@ -17,6 +17,8 @@ export class PurchaseItem {
   quantity!: number;
   unitCost!: number;
   totalCost!: number;
+  createdAt!: Date;
+  updatedAt!: Date;
 
   constructor(props: Partial<PurchaseItem> = {}) {
     Object.assign(this, props);

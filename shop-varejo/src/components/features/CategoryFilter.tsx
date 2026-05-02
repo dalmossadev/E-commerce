@@ -33,7 +33,7 @@ export function CategoryFilter({ current, onChange }: CategoryFilterProps) {
             aria-pressed={active}
             aria-label={`Filtrar por ${cat.label}`}
             className={cn(
-              'font-mono text-xs px-3 py-1.5 rounded-md',
+              'font-mono text-xs px-3 py-1.5',
               'border transition-all duration-200',
               'tracking-wider uppercase',
               active

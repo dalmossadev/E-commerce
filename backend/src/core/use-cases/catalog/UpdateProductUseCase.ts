@@ -47,7 +47,7 @@ export class UpdateProductUseCase {
     if (input.originalPrice !== undefined) {
       if (input.originalPrice === null) {
         product.removeDiscount();
-      } else if (input.originalPrice > product.basePrice) {
+      } else if (input.originalPrice > (product.basePrice ?? 0)) {
         product.applyDiscount(input.originalPrice);
       }
     }

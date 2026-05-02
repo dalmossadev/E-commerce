@@ -54,7 +54,7 @@ export class CreateProductUseCase {
                 // Gera SKU único baseado na marca, nome, categoria, cor e tamanho
                 const sku = this.skuService.generate({
                     name: product.name,
-                    brand: product.brand,
+                    brand: product.brand!,
                     category: product.category,
                     color,
                     size
@@ -64,7 +64,7 @@ export class CreateProductUseCase {
                 variant.sku = sku;
                 variant.color = color;
                 variant.size = size;
-                variant.price = product.basePrice; // Herda preço base
+                variant.price = product.basePrice!; // Herda preço base
                 variant.stock = data.initialStock || 0; // Define estoque inicial
 
                 variants.push(variant);

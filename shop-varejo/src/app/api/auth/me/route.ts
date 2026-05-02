@@ -7,6 +7,8 @@ interface User {
   role: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const cookie = request.headers.get('cookie');

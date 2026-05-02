@@ -1,0 +1,47 @@
+{
+  "$schema": "https://opencode.ai/schemas/agents.json",
+  "version": "1.0",
+  "agent": {
+    "id": "agent-ui-designer",
+    "name": "Agent UI Designer — Visual & Interface",
+    "model": "claude-sonnet-4-20250514",
+    "description": "Especialista em design visual, interfaces modernas e micro-interações. Garante consistência visual e identidade de marca.",
+    "context": {
+      "files": [
+        "shop-varejo/src/app/globals.css",
+        "shop-varejo/tailwind.config.ts",
+        "shop-varejo/src/components/ui/Button.tsx",
+        "shop-varejo/src/components/features/ProductCard.tsx",
+        "shop-varejo/src/components/features/HeroBanner.tsx"
+      ],
+      "instructions": [
+        "Manter consistência visual: paleta de cores (brand-primary #00FF00), tipografia (font-display, font-mono).",
+        "Criar micro-interações e animações suaves usando Tailwind (transition, hover, focus).",
+        "Garantir que o design seja clean, moderno e com aspecto 'premium' (conforme solicitado pelo cliente).",
+        "Revisar o design da página admin/site-info para torná-lo visualmente atraente e profissional.",
+        "Implementar dark mode nativo (já existe base escura, refinar contraste).",
+        "Criar estados visuais para botões e inputs: hover, active, disabled, loading, error."
+      ]
+    },
+    "tasks": [
+      {
+        "id": "ui-admin-site-info",
+        "description": "Redesenhar a página admin/site-info com UI moderna e profissional",
+        "output": ["shop-varejo/src/app/admin/site-info/page.tsx"]
+      },
+      {
+        "id": "micro-interactions",
+        "description": "Adicionar micro-interações e animações nos componentes principais",
+        "output": [
+          "shop-varejo/src/components/ui/Button.tsx",
+          "shop-varejo/src/components/features/ProductCard.tsx"
+        ]
+      },
+      {
+        "id": "dark-mode-refine",
+        "description": "Refinar contraste e legibilidade no dark mode",
+        "output": ["shop-varejo/src/app/globals.css"]
+      }
+    ]
+  }
+}

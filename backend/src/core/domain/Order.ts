@@ -99,14 +99,20 @@ export class Order {
         this.discountSource = 'progressive';
       }
     } else {
-      for (const rule of Order.PROGRESSIVE_DISCOUNTS) {
-        if (totalQuantity >= rule.minQuantity) {
-          const discountAmount = Math.floor(this.subtotal * rule.discountPercent / 100);
-          if (discountAmount > this.discount) {
-            this.discount = discountAmount;
-            this.discountSource = 'progressive';
-          }
-        }
+      let progressiveDiscount = 0;
+      if (totalQuantity >= 100) {
+        progressiveDiscount = Math.floor(this.subtotal * 20 / 10);
+      } else if (totalQuantity >= 50) {
+        progressiveDiscount = Math.floor(this.subtotal * 15 / 10);
+      } else if (totalQuantity >= 20) {
+        progressiveDiscount = Math.floor(this.subtotal * 10 / 10);
+      } else if (totalQuantity >= 10) {
+        progressiveDiscount = Math.floor(this.subtotal * 5 / 100);
+      }
+
+      if (progressiveDiscount > this.discount) {
+        this.discount = progressiveDiscount;
+        this.discountSource = 'progressive';
       }
     }
 
@@ -124,11 +130,18 @@ export class Order {
         return { quantity: totalQuantity, discountPercent: percent, discountAmount: discount };
       }
     } else {
-      for (const rule of Order.PROGRESSIVE_DISCOUNTS) {
-        if (totalQuantity >= rule.minQuantity) {
-          const discountAmount = Math.floor(this.subtotal * rule.discountPercent / 100);
-          return { quantity: totalQuantity, discountPercent: rule.discountPercent, discountAmount };
-        }
+      if (totalQuantity >= 100) {
+        const discountAmount = Math.floor(this.subtotal * 20 / 10);
+        return { quantity: totalQuantity, discountPercent: 20, discountAmount };
+      } else if (totalQuantity >= 50) {
+        const discountAmount = Math.floor(this.subtotal * 15 / 10);
+        return { quantity: totalQuantity, discountPercent: 15, discountAmount };
+      } else if (totalQuantity >= 20) {
+        const discountAmount = Math.floor(this.subtotal * 10 / 10);
+        return { quantity: totalQuantity, discountPercent: 10, discountAmount };
+      } else if (totalQuantity >= 10) {
+        const discountAmount = Math.floor(this.subtotal * 5 / 100);
+        return { quantity: totalQuantity, discountPercent: 5, discountAmount };
       }
     }
 

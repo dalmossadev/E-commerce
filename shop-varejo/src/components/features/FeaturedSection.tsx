@@ -11,12 +11,13 @@ interface Product {
   id: number;
   name: string;
   description: string;
-  basePrice: number;
-  originalPrice?: number;
+  basePrice: number;  // centavos — dividir por 100 para exibir
+  originalPrice?: number;  // centavos
   imageName: string;
+  imageUrl?: string;  // URL completa: http://localhost:3001/img/catalogo/arquivo.webp
   altText: string;
   category: string;
-  badge?: string;
+  badge?: string | null;  // null = não exibir badge
   inStock: boolean;
   featured: boolean;
   specs?: Record<string, string>;

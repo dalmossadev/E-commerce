@@ -8,6 +8,7 @@ export interface CreateLeadDTO {
   productId?: number;
   variantId?: number;
   notes?: string;
+  userId?: number;
 }
 
 export interface UpdateLeadDTO {

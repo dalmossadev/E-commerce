@@ -2,6 +2,7 @@ import { Lead } from '@core/domain/Lead';
 import { LeadStatus } from '@core/domain/Lead';
 import { ILeadRepository } from '@core/interfaces/ILeadRepository';
 import { IProductRepository } from '@core/interfaces/IProductRepository';
+import { IUserRepository } from '@core/interfaces/IUserRepository';
 import { CreateLeadUseCase } from '@core/use-cases/LeadUseCases';
 import { CreateLeadDTO } from '@core/dto/LeadDTO';
 
@@ -9,6 +10,8 @@ describe('CreateLeadUseCase', () => {
   let createLeadUseCase: CreateLeadUseCase;
   let mockLeadRepository: jest.Mocked<ILeadRepository>;
   let mockProductRepository: jest.Mocked<IProductRepository>;
+  let mockUserRepository: jest.Mocked<IUserRepository>;
+  let mockAddToWishlist: any;
 
   beforeEach(() => {
     mockLeadRepository = {
@@ -23,7 +26,7 @@ describe('CreateLeadUseCase', () => {
 
     mockProductRepository = {
       save: jest.fn(),
-      findById: jest.fn().mockResolvedValue({ id: 99 } as any),
+      findById: jest.fn().mockResolvedValue({ id: 99 }),
       findBySku: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
@@ -31,7 +34,24 @@ describe('CreateLeadUseCase', () => {
       count: jest.fn()
     } as unknown as jest.Mocked<IProductRepository>;
 
-    createLeadUseCase = new CreateLeadUseCase(mockLeadRepository, mockProductRepository);
+    mockUserRepository = {
+      save: jest.fn().mockResolvedValue({ id: 123 }),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn()
+    } as unknown as jest.Mocked<IUserRepository>;
+
+    mockAddToWishlist = {
+      execute: jest.fn().mockResolvedValue({})
+    };
+
+    createLeadUseCase = new CreateLeadUseCase(
+      mockLeadRepository,
+      mockProductRepository,
+      mockUserRepository,
+      mockAddToWishlist
+    );
   });
 
   it('creates a lead with valid data', async () => {
@@ -56,6 +76,72 @@ describe('CreateLeadUseCase', () => {
     expect(result.customerName).toBe('John Doe');
     expect(result.status).toBe(LeadStatus.PENDING);
     expect(result.customerPhone).toBe('+5511999999999');
+  });
+
+  it('creates lead with productId and calls wishlist when userId is present', async () => {
+    const data: CreateLeadDTO = {
+      sku: 'SKU-123',
+      customerName: 'John Doe',
+      customerPhone: '+5511999999999',
+      productId: 99,
+      userId: 1
+    };
+
+    const savedLead = new Lead();
+    savedLead.id = 1;
+    savedLead.sku = data.sku!;
+    savedLead.customerName = data.customerName;
+    savedLead.customerPhone = data.customerPhone;
+    savedLead.status = LeadStatus.PENDING;
+    savedLead.productId = 99;
+
+    mockLeadRepository.save.mockResolvedValue(savedLead);
+    mockProductRepository.findById.mockResolvedValue({ id: 99 } as any);
+
+    const result = await createLeadUseCase.execute(data);
+
+    expect(result).toBeDefined();
+    expect(mockAddToWishlist.execute).toHaveBeenCalledWith(1, 99);
+  });
+
+  it('calls wishlist when productId is provided (with userId)', async () => {
+    const data: CreateLeadDTO = {
+      sku: 'SKU-123',
+      customerName: 'John Doe',
+      customerPhone: '+551199999999',
+      productId: 99,
+      userId: 123
+    };
+
+    const savedLead = new Lead();
+    savedLead.id = 1;
+    savedLead.customerName = data.customerName;
+    savedLead.status = LeadStatus.PENDING;
+
+    mockLeadRepository.save.mockResolvedValue(savedLead);
+
+    await createLeadUseCase.execute(data);
+
+    expect(mockAddToWishlist.execute).toHaveBeenCalledWith(123, 99);
+  });
+
+  it('does NOT call wishlist when productId is missing', async () => {
+    const data: CreateLeadDTO = {
+      sku: 'SKU-123',
+      customerName: 'John Doe',
+      customerPhone: '+5511999999999',
+      userId: 1
+    };
+
+    const savedLead = new Lead();
+    savedLead.id = 1;
+    savedLead.status = LeadStatus.PENDING;
+
+    mockLeadRepository.save.mockResolvedValue(savedLead);
+
+    await createLeadUseCase.execute(data);
+
+    expect(mockAddToWishlist.execute).not.toHaveBeenCalled();
   });
 
   it('creates lead without optional fields', async () => {

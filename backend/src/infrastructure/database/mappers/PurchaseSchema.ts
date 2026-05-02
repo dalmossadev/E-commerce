@@ -18,8 +18,8 @@ export const PurchaseSchema = new EntitySchema<Purchase>({
     notes: { type: "text", nullable: true },
     expectedDeliveryDate: { type: "timestamp", nullable: true },
     trackingNumber: { type: "varchar", length: 100, nullable: true },
-    createdAt: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
-    updatedAt: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" }
+    createdAt: { type: "timestamp", createDate: true },
+    updatedAt: { type: "timestamp", updateDate: true },
   },
   relations: {
     items: {

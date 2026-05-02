@@ -18,6 +18,9 @@ import { OrderSchema } from "./mappers/OrderSchema";
 import { OrderItemSchema } from "./mappers/OrderItemSchema";
 import { PurchaseSchema } from "./mappers/PurchaseSchema";
 import { PurchaseItemSchema } from "./mappers/PurchaseItemSchema";
+import { LeadSchema } from "./mappers/LeadSchema";
+import { WishlistSchema } from "./mappers/WishlistSchema";
+import { BannerSchema } from "./mappers/BannerSchema";
 
 
 dotenv.config();
@@ -31,28 +34,30 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     
     // ATENÇÃO: synchronize: false evita conflitos com schema existente
-synchronize: false,
+synchronize: true,
     logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : false,
 
     // Registramos o Schema aqui em vez de classes decoradas
-entities: [
+    entities: [
         ProductSchema,
         ProductVariantSchema,
-        SettingsSchema,
         UserSchema,
         UserProfileSchema,
         CustomerSchema,
         SupplierSchema,
         CampaignSchema,
+        SettingsSchema,
         AuditLogSchema,
         VariantHistorySchema,
         ProductHistorySchema,
         OrderSchema,
         OrderItemSchema,
         PurchaseSchema,
-        PurchaseItemSchema
-                         
-         ],
+        PurchaseItemSchema,
+        LeadSchema,
+        WishlistSchema,
+        BannerSchema,
+    ],
     
     // Mantemos o caminho para migrations caso precise no futuro
     migrations: ["src/infra/database/migrations/*.ts"],

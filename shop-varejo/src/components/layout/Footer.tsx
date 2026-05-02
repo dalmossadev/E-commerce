@@ -1,10 +1,14 @@
 /**
  * @file src/components/layout/Footer.tsx
  */
+'use client';
+
 import { Zap } from 'lucide-react';
-import { SITE_INFO, getWhatsAppLink } from '@/constants/site-config';
+import { useSiteInfo } from '@/hooks/useSiteInfo';
 
 export function Footer() {
+  const { siteInfo } = useSiteInfo();
+
   return (
     <footer
       className="bg-brand-surface border-t border-brand-border mt-24"
@@ -18,10 +22,10 @@ export function Footer() {
             <Zap size={18} className="text-brand-primary" aria-hidden="true" />
             <div>
               <p className="font-display font-bold text-brand-text tracking-widest">
-                {SITE_INFO.name}
+                {siteInfo.name}
               </p>
               <p className="text-xs text-brand-muted font-mono">
-                {SITE_INFO.tagline}
+                {siteInfo.tagline}
               </p>
             </div>
           </div>
@@ -30,8 +34,8 @@ export function Footer() {
           <nav aria-label="Links do rodapé" className="flex gap-6">
             {[
               { href: '#catalogo', label: 'Catálogo' },
-              { href: getWhatsAppLink(), label: 'WhatsApp', external: true },
-              { href: SITE_INFO.social.instagram, label: 'Instagram', external: true },
+              { href: `https://wa.me/${siteInfo.whatsapp.number}?text=${encodeURIComponent(siteInfo.whatsapp.message)}`, label: 'WhatsApp', external: true },
+              { href: siteInfo.social.instagram, label: 'Instagram', external: true },
             ].map(link => (
               <a
                 key={link.href}
@@ -50,7 +54,7 @@ export function Footer() {
         <div className="mt-8 pt-6 border-t border-brand-border
                         flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="font-mono text-xs text-brand-muted/50">
-            © {new Date().getFullYear()} {SITE_INFO.name} · Todos os direitos reservados
+            © {new Date().getFullYear()} {siteInfo.name} · Todos os direitos reservados
           </p>
           <p className="font-mono text-xs text-brand-muted/40">
             Config-Driven · Next.js 14 · Tailwind CSS

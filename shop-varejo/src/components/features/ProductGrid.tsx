@@ -12,12 +12,13 @@ interface Product {
   id: number;
   name: string;
   description: string;
-  basePrice: number;
-  originalPrice?: number;
+  basePrice: number;  // centavos — dividir por 100 para exibir
+  originalPrice?: number;  // centavos
   imageName: string;
+  imageUrl?: string;  // URL completa: http://localhost:3000/img/catalogo/arquivo.webp
   altText: string;
   category: string;
-  badge?: string;
+  badge?: string | null;  // null = não exibir badge
   inStock: boolean;
   featured: boolean;
   specs?: Record<string, string>;
@@ -73,8 +74,8 @@ export function ProductGrid({ limit = 20 }: ProductGridProps) {
       {/* Filtros */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <CategoryFilter current={activeCategory as any} onChange={setActiveCategory} />
-        <p className="font-mono text-xs text-brand-muted" aria-live="polite">
-          {!loading && !error && `${products.length} produto${products.length !== 1 ? 's' : ''}`}
+        <p className="font-mono text-[10px] text-brand-muted/60 uppercase tracking-wider" aria-live="polite">
+          {!loading && !error && `${products.length} produto${products.length !== 1 ? 's' : ''} encontrado${products.length !== 1 ? 's' : ''}`}
         </p>
       </div>
 
@@ -85,9 +86,9 @@ export function ProductGrid({ limit = 20 }: ProductGridProps) {
         <EmptyState category={activeCategory} onReset={() => setActiveCategory('todos')} />
       )}
 
-      {/* Grid */}
+      {/* Grid otimizado para conversão */}
       {!loading && !error && products.length > 0 && (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="list">
+        <ul className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5" role="list">
           {products.map((product, i) => (
             <li key={product.id} role="listitem" style={{ animationDelay: `${i * 60}ms` }} className="animate-fade-up">
               <ProductCard product={product} className="h-full" />
@@ -104,7 +105,7 @@ function LoadingState() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="animate-pulse">
-          <div className="bg-brand-surface rounded-lg h-80" />
+           <div className="bg-brand-surface h-80" />
         </div>
       ))}
     </div>

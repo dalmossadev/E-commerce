@@ -10,6 +10,6 @@ export const CustomerSchema = new EntitySchema<Customer>({
     fullName: { type: "varchar", length: 255 },
     cpf: { type: "varchar", length: 14, unique: true },
     phone: { type: "varchar", length: 20 },
-    address: { type: "json", nullable: true },
+    address: { type: "json", nullable: true }
   },
 });

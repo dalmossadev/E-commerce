@@ -68,7 +68,20 @@ export class LeadManager {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Erro ao criar lead');
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let errorMessage = 'Erro ao criar lead';
+      try {
+        const errorData = JSON.parse(errorBody);
+        errorMessage = errorData.errors?.[0]?.message || errorData.message || errorMessage;
+        
+      } catch {
+        errorMessage = errorBody || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+  
     return response.json();
   }
 

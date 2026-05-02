@@ -52,7 +52,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {error && (
-            <div className="rounded-md bg-red-900/50 p-4 border border-red-500">
+            <div className="bg-red-900/50 p-4 border border-red-500">
               <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-brand-border bg-brand-surface px-3 py-2 text-brand-text shadow-sm
+                className="mt-1 block w-full border border-brand-border bg-brand-surface px-3 py-2 text-brand-text
                            focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary
                            disabled:bg-brand-surface-2 disabled:cursor-not-allowed placeholder:text-brand-muted"
                 placeholder="seu@email.com"
@@ -89,7 +89,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-brand-border bg-brand-surface px-3 py-2 text-brand-text shadow-sm
+                className="mt-1 block w-full border border-brand-border bg-brand-surface px-3 py-2 text-brand-text
                            focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary
                            disabled:bg-brand-surface-2 disabled:cursor-not-allowed placeholder:text-brand-muted"
                 placeholder="••••••••"
@@ -100,7 +100,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm
+            className="w-full flex justify-center py-3 px-4 border border-transparent shadow-sm
                        text-sm font-medium text-brand-background bg-brand-primary hover:bg-brand-neon-dim focus:outline-none focus:ring-2
                        focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors duration-200"

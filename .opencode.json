@@ -1,0 +1,193 @@
+{
+  "$schema": "https://opencode.ai/schemas/agents.json",
+  "version": "1.1",
+  "orchestrator": {
+    "id": "orchestrator",
+    "name": "Sisters Lab — Super Orchestrator",
+    "description": "Coordena 9 agentes especializados. Garante Clean Architecture, integridade financeira e sincronia Frontend/Backend.",
+    "model": "claude-sonnet-4-20250514",
+    "strategy": "parallel",
+    "agents": [
+      "agent-sales", 
+      "agent-procurement", 
+      "agent-catalog", 
+      "agent-security", 
+      "agent-financial", 
+      "agent-frontend-bridge",
+      "agent-qa",
+      "agent-ux-specialist",
+      "agent-ui-designer"
+    ]
+  },
+
+  "agents": [
+    {
+      "id": "agent-security",
+      "name": "Agent Security — Auth & Protection",
+      "model": "claude-sonnet-4-20250514",
+      "description": "Resolve bugs críticos de autenticação e implementa segurança avançada conforme o TDD v1.0.9.",
+      "context": {
+        "files": [
+          "src/adapters/http/routes/auth.routes.ts",
+          "src/infrastructure/auth/AuthService.ts",
+          "src/core/interfaces/IAuthService.ts",
+          "src/adapters/http/middlewares/AuthMiddleware.ts"
+        ],
+        "instructions": [
+          "CORREÇÃO CRÍTICA: Substituir productRepository por userRepository no auth.routes.ts.",
+          "Implementar IAuthService completo: hashPassword, comparePassword e geração de tokens.",
+          "Implementar lógica de Refresh Token para manter sessão no Next.js.",
+          "Configurar Rate Limiting: 5 req/15min para rotas de login/register."
+        ]
+      },
+      "tasks": [
+        {
+          "id": "fix-auth-injection",
+          "description": "Corrigir injeção de repositório nas rotas de autenticação",
+          "output": ["src/adapters/http/routes/auth.routes.ts"]
+        },
+        {
+          "id": "refresh-token-impl",
+          "description": "Implementar Use Case e Rota de Refresh Token",
+          "output": [
+            "src/core/use-cases/auth/RefreshTokenUseCase.ts",
+            "src/adapters/http/routes/auth.routes.ts"
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "agent-financial",
+      "name": "Agent Financial — Integrity & Taxes",
+      "model": "claude-sonnet-4-20250514",
+      "description": "Garante que todos os cálculos monetários sigam a regra de centavos (integers) e auditoria financeira.",
+      "context": {
+        "instructions": [
+          "Todos os valores monetários DEVEM ser tratados como inteiros (centavos) para evitar erros de ponto flutuante.",
+          "Implementar Service de cálculo de descontos progressivos para a Entidade Order.",
+          "Registrar impacto financeiro detalhado no AuditLog via IAuditRepository."
+        ]
+      },
+      "tasks": [
+        {
+          "id": "tax-service",
+          "description": "Criar DiscountService e integrar à entidade Order",
+          "output": ["src/core/domain/services/DiscountService.ts"]
+        }
+      ]
+    },
+
+    {
+      "id": "agent-frontend-bridge",
+      "name": "Agent Frontend-Bridge — Next.js Sync",
+      "model": "claude-sonnet-4-20250514",
+      "description": "Garante a sincronia de contratos entre o Backend (Node) e o Frontend (Next.js).",
+      "context": {
+        "files": [
+          "src/core/dto/AuthDTO.ts",
+          "src/core/dto/OrderDTO.ts"
+        ],
+        "instructions": [
+          "Validar se o formato do JSON retornado pelo Backend bate com o esperado pelo AuthContext do Next.js.",
+          "Garante que o cookie '__session' httpOnly seja configurado corretamente no header Set-Cookie.",
+          "Implementar DTOs de resposta que omitam campos sensíveis (como password) antes de enviar ao frontend."
+        ]
+      },
+      "tasks": [
+        {
+          "id": "sync-auth-payload",
+          "description": "Ajustar DTO de resposta de Login para o Next.js",
+          "output": ["src/core/dto/AuthDTO.ts"]
+        }
+      ]
+    },
+
+    {
+      "id": "agent-ux-specialist",
+      "name": "Agent UX Specialist — User Experience",
+      "model": "claude-sonnet-4-20250514",
+      "description": "Especialista em experiência do usuário. Otimiza fluxos de navegação, usabilidade e acessibilidade do frontend.",
+      "context": {
+        "files": [
+          "shop-varejo/src/app/page.tsx",
+          "shop-varejo/src/components/layout/Header.tsx",
+          "shop-varejo/src/components/layout/Footer.tsx",
+          "shop-varejo/src/components/features/FloatingWhatsApp.tsx",
+          "shop-varejo/src/app/admin/site-info/page.tsx"
+        ],
+        "instructions": [
+          "Analisar fluxos de navegação e identificar pontos de fricção para o usuário.",
+          "Garantir que o site seja totalmente acessível (WCAG 2.1 AA): uso correto de aria-labels, roles, navegação por teclado.",
+          "Otimizar a experiência mobile: menu hambúrguer, toques grandes, scroll suave.",
+          "Melhorar a experiência do admin/site-info: tornar mais intuitivo para usuários não-técnicos.",
+          "Implementar feedback visual para ações (loading, success, error) usando Tailwind."
+        ]
+      },
+      "tasks": [
+        {
+          "id": "ux-audit-site-info",
+          "description": "Auditar e melhorar a usabilidade da página admin/site-info para leigos",
+          "output": ["shop-varejo/src/app/admin/site-info/page.tsx"]
+        },
+        {
+          "id": "accessibility-header",
+          "description": "Melhorar acessibilidade do Header e menu mobile",
+          "output": ["shop-varejo/src/components/layout/Header.tsx"]
+        },
+        {
+          "id": "mobile-experience",
+          "description": "Otimizar experiência mobile em todas as páginas",
+          "output": [
+            "shop-varejo/src/components/layout/Header.tsx",
+            "shop-varejo/src/app/page.tsx"
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "agent-ui-designer",
+      "name": "Agent UI Designer — Visual & Interface",
+      "model": "claude-sonnet-4-20250514",
+      "description": "Especialista em design visual, interfaces modernas e micro-interações. Garante consistência visual e identidade de marca.",
+      "context": {
+        "files": [
+          "shop-varejo/src/app/globals.css",
+          "shop-varejo/tailwind.config.ts",
+          "shop-varejo/src/components/ui/Button.tsx",
+          "shop-varejo/src/components/features/ProductCard.tsx",
+          "shop-varejo/src/components/features/HeroBanner.tsx"
+        ],
+        "instructions": [
+          "Manter consistência visual: paleta de cores (brand-primary #00FF00), tipografia (font-display, font-mono).",
+          "Criar micro-interações e animações suaves usando Tailwind (transition, hover, focus).",
+          "Garantir que o design seja clean, moderno e com aspecto 'premium' (conforme solicitado pelo cliente).",
+          "Revisar o design da página admin/site-info para torná-lo visualmente atraente e profissional.",
+          "Implementar dark mode nativo (já existe base escura, refinar contraste).",
+          "Criar estados visuais para botões e inputs: hover, active, disabled, loading, error."
+        ]
+      },
+      "tasks": [
+        {
+          "id": "ui-admin-site-info",
+          "description": "Redesenhar a página admin/site-info com UI moderna e profissional",
+          "output": ["shop-varejo/src/app/admin/site-info/page.tsx"]
+        },
+        {
+          "id": "micro-interactions",
+          "description": "Adicionar micro-interações e animações nos componentes principais",
+          "output": [
+            "shop-varejo/src/components/ui/Button.tsx",
+            "shop-varejo/src/components/features/ProductCard.tsx"
+          ]
+        },
+        {
+          "id": "dark-mode-refine",
+          "description": "Refinar contraste e legibilidade no dark mode",
+          "output": ["shop-varejo/src/app/globals.css"]
+        }
+      ]
+    }
+  ]
+}

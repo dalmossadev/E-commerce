@@ -127,4 +127,16 @@ export class TypeORMProductRepository implements IProductRepository {
   async updateVariant(variant: ProductVariant): Promise<ProductVariant> {
     return await this.variantRepository.save(variant);
   }
+
+  async updateImage(sku: string, imageUrl: string): Promise<void> {
+    const product = await this.findBySku(sku);
+    if (product) {
+      // Extrai o filename da URL completa ou usa diretamente se for apenas o filename
+      const filename = imageUrl.includes('/') 
+        ? imageUrl.split('/').pop() || imageUrl 
+        : imageUrl;
+      product.imageName = filename;
+      await this.repository.save(product);
+    }
+  }
 }

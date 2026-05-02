@@ -28,6 +28,10 @@ export class LeadController {
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = createLeadSchema.parse(req.body) as CreateLeadDTO;
+      const authReq = req as any;
+      if (authReq.user?.sub) {
+        data.userId = authReq.user.sub;
+      }
       const lead = await this.createLeadUseCase.execute(data);
       res.status(201).json(lead);
     } catch (error) {

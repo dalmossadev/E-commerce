@@ -128,8 +128,10 @@ const product =  productManager.getBySku('12345'); // Otimizado (O(1) na rede)
 
 
 // Transformamos o Array em um Objeto Indexado ou Map
-const list_product =  productManager.getAll();
-const productMap = new Map(list_product.map(p => [p.sku, p]));
+async function createProductMap() {
+  const list_product = await productManager.getAll();
+  const productMap = new Map(list_product.map(p => [p.sku, p]));
 
-// Busca instantânea
-const product_for_id = productMap.get('12345');
+  // Busca instantânea
+  const product_for_id = productMap.get('12345');
+}

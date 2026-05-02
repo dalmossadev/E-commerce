@@ -7,11 +7,12 @@
 
 import { useState, useEffect } from 'react';
 import { MessageCircle, X }    from 'lucide-react';
-import { SITE_INFO, getWhatsAppLink } from '@/constants/site-config';
+import { useSiteInfo } from '@/hooks/useSiteInfo';
 
 export function FloatingWhatsApp() {
   const [visible,  setVisible]  = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const { siteInfo } = useSiteInfo();
 
   // Aparece após rolar 200px
   useEffect(() => {
@@ -21,7 +22,27 @@ export function FloatingWhatsApp() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const waLink = getWhatsAppLink();
+  const waLink = `https://wa.me/${siteInfo.whatsapp.number}?text=${encodeURIComponent(siteInfo.whatsapp.message)}`;
+
+  const handleWhatsAppClick = () => {
+    // Rastreio de cliques (Task 05)
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'click', {
+        event_category: 'WhatsApp',
+        event_label: 'Floating Button',
+        value: 1,
+      });
+    }
+    
+    // Fallback: enviar evento para backend via fetch (se necessário)
+    try {
+      fetch('/api/analytics/whatsapp-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'floating_button', timestamp: new Date().toISOString() }),
+      }).catch(() => {}); // Silencioso - não bloqueia o usuário
+    } catch {}
+  };
 
   return (
     <div
@@ -33,7 +54,7 @@ export function FloatingWhatsApp() {
       {/* Tooltip expandido */}
       {expanded && (
         <div
-          className="bg-brand-surface border border-brand-primary/30 rounded-2xl
+          className="bg-brand-surface border border-brand-primary/30
                      p-4 max-w-[240px] shadow-neon-sm
                      animate-fade-up"
         >
@@ -55,9 +76,10 @@ export function FloatingWhatsApp() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-brand-primary text-brand-background
-                       text-xs font-bold px-3 py-2 rounded-lg
+                       text-xs font-bold px-3 py-2
                        hover:bg-brand-neon-dim transition-colors"
             aria-label="Abrir WhatsApp"
+            onClick={handleWhatsAppClick}
           >
             <MessageCircle size={14} aria-hidden="true" />
             Abrir WhatsApp
@@ -67,8 +89,11 @@ export function FloatingWhatsApp() {
 
       {/* Botão principal */}
       <button
-        onClick={() => setExpanded(v => !v)}
-        className="relative w-14 h-14 rounded-full
+        onClick={() => {
+          setExpanded(v => !v);
+          if (!expanded) handleWhatsAppClick();
+        }}
+        className="relative w-14 h-14
                    bg-brand-primary text-brand-background
                    flex items-center justify-center
                    shadow-neon animate-neon-pulse
@@ -82,7 +107,7 @@ export function FloatingWhatsApp() {
 
         {/* Dot animado — "online" */}
         <span
-          className="absolute top-1 right-1 w-3 h-3 bg-green-400 rounded-full
+          className="absolute top-1 right-1 w-3 h-3 bg-green-400
                      border-2 border-black animate-blink"
           aria-hidden="true"
         />

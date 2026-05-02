@@ -58,8 +58,9 @@ export function useProducts(options?: UseProductsOptions) {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch products');
 
-      const data: ProductsResponse = await response.json();
-      setProducts(data.data);
+       const data = await response.json();
+       // API retorna { data: Product[], total, page, limit, totalPages }
+       setProducts(data.data || data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -94,8 +95,10 @@ export function useProduct(sku: string) {
       const response = await fetch(`/api/products/${sku}`);
       if (!response.ok) throw new Error('Failed to fetch product');
 
-      const data = await response.json();
-      setProduct(data);
+       const data = await response.json();
+       // Novo formato: API retorna { data: Product } ou Product direto
+       const product = data.data || data;
+       setProduct(product);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

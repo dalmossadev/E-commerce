@@ -9,9 +9,10 @@ export const CampaignSchema = new EntitySchema<Campaign>({
     id: { type: "int", primary: true, generated: "increment" },
     name: { type: "varchar", length: 100 },
     slug: { type: "varchar", length: 50, unique: true },
-    messageTemplate: { type: "text" }, // Aqui salvamos o corpo da mensagem
+    messageTemplate: { type: "text" },
     isActive: { type: "boolean", default: true },
     startDate: { type: "timestamp", nullable: true },
     endDate: { type: "timestamp", nullable: true },
+    targetUrl: { type: "varchar", length: 255, nullable: true }
   }
 });

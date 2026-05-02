@@ -11,5 +11,10 @@ export const SettingsSchema = new EntitySchema<Settings>({
     id: { type: "int", primary: true, generated: "increment" },
     key: { type: "varchar", length: 50, unique: true },
     value: { type: "text" },
+    createdAt: { type: "timestamp", createDate: true },
+    updatedAt: { type: "timestamp", updateDate: true },
   },
+  indices: [
+    { name: "idx_settings_key", columns: ["key"] }
+  ]
 });

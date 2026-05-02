@@ -11,6 +11,6 @@ export const ProductHistorySchema = new EntitySchema<ProductHistory>({
     action: { type: "varchar", length: 10 },
     dataSnapshot: { type: "json" }, // No MySQL, usamos 'json'
     changedBy: { type: "varchar", length: 100, nullable: true },
-    createdAt: { type: "timestamp", createDate: true },
+    createdAt: { type: "timestamp", default: () => "CURRENT_TIMESTAMP" },
   },
 });

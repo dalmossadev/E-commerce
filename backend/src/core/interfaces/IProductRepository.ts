@@ -35,4 +35,5 @@ export interface IProductRepository {
   count(category?: ProductCategory): Promise<number>;
   findVariantById(variantId: number): Promise<ProductVariant | undefined>;
   updateVariant(variant: ProductVariant): Promise<ProductVariant>;
+  updateImage(sku: string, imageUrl: string): Promise<void>;
 }

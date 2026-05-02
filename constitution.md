@@ -153,7 +153,7 @@ Os dois agentes **nunca** atuam no mesmo arquivo ao mesmo tempo — UX entrega p
 | 3 | **agent-ux** | Semântica, A11Y, hooks de lógica |
 | 4 | **agent-ui** | Design system P&B, tokens visuais |
 | 5 | **agent-upload** | Upload de imagens de produto via Multer |
-| 6 | **agent-qa** | Regressão 132+ testes backend + cobertura frontend |
+| 6 | **agent-qa** | Regressão 145+ testes backend + cobertura frontend |
 
 ### 6.2 Fases de Execução
 
@@ -218,6 +218,8 @@ O sistema deve priorizar a **disponibilidade dos endpoints** sobre a rigidez de 
 | Customers CRUD + paginação | ✅ Completo |
 | Product History API | 🔄 Em progresso |
 | Settings API (chave-valor) | ✅ Completo |
+| Wishlist (Wishlist API) | ✅ Completo |
+| Lead → Wishlist Integration | ✅ RESOLVIDO (01/05) |
 | Upload de imagem (`POST /products/:sku/image`) | 🔄 Em progresso |
 | Paginação em Orders/Purchases/Leads | 🔄 Em progresso |
 | Auditoria de lead confirmado | 🔄 Em progresso |
@@ -253,9 +255,15 @@ O sistema deve priorizar a **disponibilidade dos endpoints** sobre a rigidez de 
 | Product Controller | 6 | ✅ |
 | CreateLeadUseCase | 7 | ✅ |
 | Leads Integration | 8 | ✅ |
+| Lead → Wishlist Flow | ✅ RESOLVIDO (01/05) |
+| Lead → Wishlist Flow | ✅ RESOLVIDO |
 | Orders (domínio + use cases + integração) | 26 | ✅ |
 | Purchases | 14 | ✅ |
 | Campaigns / Customers / Settings | 3+ | ✅ |
+| Wishlist (domain + use cases + integration) | 3+ | ✅ |
+| CreateLeadUseCase (com Wishlist + usuário temp) | 10+ | ✅ |
+| CreateLeadUseCase (com Wishlist + usuário temp) | 10+ | ✅ |
+| Lead → Wishlist Integration | ✅ RESOLVIDO (01/05) |
 | AuthService + RefreshToken | 🔄 | Em progresso |
 | DiscountService | 🔄 | Em progresso |
 
@@ -301,7 +309,7 @@ npm run typecheck
 | Seed admin | `admin@sisterslab.com` / `password123` — **alterar em produção** |
 | Rate Limiting | 5 req/15min em `/login` e `/register` |
 | Rotas protegidas | `/checkout`, `/orders`, `/admin` |
-| Rotas públicas | `/`, `/produtos`, `/login`, `/register`, `/api/auth`, `/wishlist` |
+| Rotas públicas | `/`, `/produtos`, `/login`, `/register`, `/api/auth`, `/wishlist`, `/api/v1/wishlist` |
 | Refresh Token | `POST /api/v1/auth/refresh` |
 | UserSchema | campo `name VARCHAR(255) NULL` — já corrigido |
 

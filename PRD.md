@@ -19,10 +19,12 @@ Criar um e-commerce de calçados premium, minimalista e ultra-acessível para o 
 - **Como Admin (Dalmo),** quero subir o ambiente via Docker para garantir consistência.
 
 ## 4. FUNCTIONAL REQUIREMENTS (FR)
-- **FR-01: Interface P&B:** Design estritamente em Preto (#000) e Branco (#FFF).
-- **FR-02: Acessibilidade:** Botões de zoom global e Image Magnifier (Lupa).
-- **FR-03: Estoque:** Integração com Supabase e badge "Pronta Entrega" regional.
-- **FR-04: Conversão:** Botão "Comprar" direciona para WhatsApp com ID do produto.
+- **FR-01: Identidade Visual (Cores):** ✅ CONGELADA. As cores atuais são imutáveis e devem ser a base de toda a interface.
+- **FR-02: Moldura e Layout:** 🛠️ FLEXÍVEL. Os especialistas de UX e UI têm liberdade técnica para remodelar a estrutura, componentes e disposição dos elementos para maximizar a conversão e usabilidade.
+- **FR-03: Acessibilidade:** Botões de zoom global e Image Magnifier (Lupa).
+- **FR-04: Estoque:** Integração com Supabase e badge "Pronta Entrega" regional.
+- **FR-05: Conversão:** Botão "Comprar" direciona para WhatsApp com ID do produto.
+- **FR-06: Wishlist:** Usuários autenticados podem adicionar/remover produtos da lista de desejos via `POST /api/v1/wishlist` e `DELETE /api/v1/wishlist`.
 
 ## 5. NON-FUNCTIONAL REQUIREMENTS (NFR)
 - **Performance:** Carregamento de imagens < 1.5s (WebP).
@@ -32,8 +34,16 @@ Criar um e-commerce de calçados premium, minimalista e ultra-acessível para o 
 
 ## 6. DATA MODEL (High-Level)
 - **Users:** (id, name, email, role[ADMIN, SELLER, CUSTOMER]).
-- **Products:** (id, name, description, price, stock_id, material_info, image_alt_text).
+- **Products:** (id, name, description, price, stock_id, material_info, image_alt_text, imageName, imageUrl).
+- **Wishlists:** (id, userId, productId, createdAt) - Relacionamento N:N entre Users e Products.
 - **Analytics:** (product_id, clicks, whatsapp_leads, views).
+
+## 6.1. REGRA DE NEGÓCIO: EXIBIÇÃO DE IMAGENS
+- **Armazenamento:** O banco de dados armazena **apenas o nome do arquivo** no campo `imageUrl` (ex: `tenis-runner-pro.webp`).
+- **Composição de URL:** A URL final é composta dinamicamente no backend através de um prefixo de storage definido no Use Case (`/img/catalogo/`).
+- **Transformação:** Os Use Cases `ListProductsUseCase` e `GetProductBySkuUseCase` aplicam a lógica de prefixo antes de retornar os dados da API.
+- **Fallback:** Quando `imageUrl` é nulo/undefined, o frontend utiliza `/img/catalogo/produto-default.webp` como padrão.
+- **Localização Física:** Imagens residem em `shop-varejo/public/img/catalogo/` e são servidas pelo Next.js na raiz `/img/catalogo/`.
 
 ## 7. ACCESSIBILITY COMPLIANCE (A11Y)
 - Contraste mínimo de 7:1 (P&B Puro).
@@ -47,4 +57,4 @@ Criar um e-commerce de calçados premium, minimalista e ultra-acessível para o 
 
 ---
 **Autor: Dalmo Pereira**
-*Atualizado: 2026-04-27*
+*Atualizado: 2026-04-30*

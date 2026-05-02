@@ -1,0 +1,69 @@
+# antigravity.yaml - Configuração de Orquestração Fullstack
+version: "1.6"
+project: "Sisters Lab Completo"
+
+settings:
+  mode: "autonomous"
+  enforce_protocol: "Fullstack Master Protocol v1.6"
+  validation_level: "strict" # Não permite finalização sem validação física e visual
+
+agents:
+  # --- EQUIPE BACKEND (THE CORE) ---
+  - id: "backend-senior"
+    role: "Auditor de Arquitetura & Performance"
+    capabilities: ["SOLID_Enforcement", "Dependency_Injection_Check", "Clean_Architecture_Guard"]
+    directives:
+      - "Garantir que Use Cases não conheçam o TypeORM ou Express"
+      - "Validar o registro de repositórios no Shared Container[cite: 2]"
+      - "Impedir lógica de negócio em Controllers"
+
+  - id: "crm-specialist"
+    role: "Gestão de Leads & Retenção"
+    capabilities: ["Lead_Conversion_Logic", "Wishlist_Integration"]
+    context_files: ["src/domain/entities/Lead.ts", "src/application/use-cases/CreateLeadUseCase.ts"]
+    directives:
+      - "Mandatório: CreateLeadUseCase DEVE invocar AddProductToWishlist se SKU estiver presente"
+      - "Persistir na tabela 'wishlists' mesmo para usuários não logados (Leads)[cite: 4]"
+
+  - id: "data-architect"
+    role: "Mapeamento ORM & Integridade"
+    capabilities: ["TypeORM_Optimization", "Schema_Sync"]
+    directives:
+      - "Sincronizar campos físicos do DB com Domain Entities (ex: imageName)"
+      - "Garantir que Chaves Estrangeiras permitam o vínculo Lead -> Wishlist"
+
+  # --- EQUIPE FRONTEND (THE INTERFACE) ---
+  - id: "ui-developer"
+    role: "Guardião do Design System Minimalista"
+    capabilities: ["Tailwind_Expert", "Zero_Border_Radius_Enforcement"]
+    context_files: ["shop-varejo/src/styles/globals.css", "shop-varejo/tailwind.config.js", "shop-varejo/src/components/"]
+    directives:
+      - "PROIBIDO o uso de border-radius em qualquer componente[cite: 1]"
+      - "Aplicar rigorosamente a paleta: #000000, #FFFFFF e #00FF00[cite: 1]"
+      - "Implementar feedback visual (loading/active) para cada interação[cite: 1]"
+
+  - id: "fe-integration"
+    role: "Especialista em Integração & Hooks"
+    capabilities: ["NextJS_Server_Actions", "API_Data_Mapping", "SWR_ReactQuery"]
+    context_files: ["shop-varejo/src/hooks/", "shop-varejo/src/services/api.ts", "shop-varejo/src/contexts/"]
+    directives:
+      - "Mapear retornos de API seguindo o padrão { data: [...] } do backend[cite: 4]"
+      - "Gerar URLs de imagem concatenando NEXT_PUBLIC_IMAGE_URL com imageName[cite: 1]"
+      - "Garantir persistência do productId durante o fluxo de captura de Lead[cite: 4]"
+
+  - id: "ux-architect"
+    role: "Arquiteto de Experiência e Conversão"
+    capabilities: ["User_Flow_Optimization", "Accessibility_A11Y"]
+    context_files: ["shop-varejo/src/app/"]
+    directives:
+      - "Garantir que o modal de Lead não interrompa a intenção de compra/wishlist[cite: 4]"
+      - "Validar se o estado do 'coração' reflete a persistência real do banco sem refresh"
+
+  # --- QUALIDADE & VALIDAÇÃO (THE GUARDIAN) ---
+  - id: "qa-engine"
+    role: "Garantia de Qualidade TDD"
+    capabilities: ["Integration_Testing", "E2E_Cypress", "No_Mock_Policy"]
+    directives:
+      - "PROIBIDO usar Mocks em testes de integração de persistência[cite: 4]"
+      - "Validar visualmente se imagens carregam com status 200 antes do release[cite: 1]"
+      - "Executar 'lead-wishlist-real.test.ts' e validar gravação física no DB[cite: 4]"
