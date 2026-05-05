@@ -4,6 +4,7 @@ import { OrderItem } from "@core/domain/Order";
 export const OrderItemSchema = new EntitySchema<OrderItem>({
   name: "OrderItem",
   target: OrderItem,
+  tableName: "order_items",
   columns: {
     id: { type: "int", primary: true, generated: "increment" },
     orderId: { type: "int" },
@@ -16,5 +17,14 @@ export const OrderItemSchema = new EntitySchema<OrderItem>({
     unitPrice: { type: "int" },
     totalPrice: { type: "int" },
     fulfillmentType: { type: "varchar", length: 20 }
+  },
+  relations: {
+    order: {
+      type: "many-to-one",
+      target: "Order",
+      joinColumn: { name: "orderId" },
+      inverseSide: "items",
+      onDelete: "CASCADE"
+    }
   }
 });

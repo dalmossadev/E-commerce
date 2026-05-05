@@ -65,7 +65,11 @@ export class TypeORMProductRepository implements IProductRepository {
       queryBuilder.orderBy('product.createdAt', 'DESC');
     }
 
-    const [data, total] = await queryBuilder.skip(skip).take(limit).getManyAndCount();
+    const [data, total] = await queryBuilder
+      .leftJoinAndSelect('product.variants', 'variant')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       data,

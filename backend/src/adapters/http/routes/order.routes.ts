@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { OrderController } from '../controllers/OrderController';
 import { validate } from '../middlewares/ValidationMiddleware';
-import { authenticate, requireCustomer } from '../middlewares/AuthMiddleware';
+import { authenticate, requireCustomer, requireAdmin } from '../middlewares/AuthMiddleware';
 import { createOrderSchema, updateOrderStatusSchema, applyDiscountSchema } from '../validations/order.validation';
 
 export { OrderController };
@@ -17,5 +17,7 @@ orderRouter.patch('/:id/status', authenticate, requireCustomer, validate(updateO
 orderRouter.patch('/:id/cancel', authenticate, requireCustomer, (req, res, next) => orderController.cancel(req, res, next));
 orderRouter.patch('/:id/discount', authenticate, requireCustomer, validate(applyDiscountSchema), (req, res, next) => orderController.applyDiscount(req, res, next));
 orderRouter.post('/:id/refresh-session', authenticate, requireCustomer, (req, res, next) => orderController.refreshSession(req, res, next));
+orderRouter.get('/:id/pix', (req, res, next) => orderController.getPix(req, res, next));
+orderRouter.patch('/:id/confirm-payment', authenticate, requireAdmin, (req, res, next) => orderController.confirmPayment(req, res, next));
 
 export { orderRouter };

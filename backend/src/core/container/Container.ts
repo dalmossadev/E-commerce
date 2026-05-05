@@ -29,6 +29,9 @@ import { DeleteProductUseCase } from '@core/use-cases/catalog/DeleteProductUseCa
 import { AuthUseCases } from '@core/use-cases/AuthUseCases';
 import { CreateSupplierUseCase, ListSuppliersUseCase, GetSupplierByIdUseCase, UpdateSupplierUseCase, DeleteSupplierUseCase } from '@core/use-cases/SupplierUseCases';
 import { CreateOrderUseCase, UpdateOrderStatusUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderByIdUseCase } from '@core/use-cases/orders/OrderUseCases';
+import { ConfirmPaymentUseCase } from '@core/use-cases/orders/ConfirmPaymentUseCase';
+import { GetOrderPixUseCase } from '@core/use-cases/orders/GetOrderPixUseCase';
+import { GeneratePaymentQRCodeUseCase } from '@core/use-cases/payment/GeneratePaymentQRCodeUseCase';
 import { CreatePurchaseOrderUseCase, UpdatePurchaseStatusUseCase } from '@core/use-cases/procurement/CreatePurchaseOrderUseCase';
 import { ReceiveInventoryUseCase } from '@core/use-cases/procurement/ReceiveInventoryUseCase';
 import { ListPurchasesUseCase, GetPurchaseByIdUseCase, DeletePurchaseUseCase } from '@core/use-cases/procurement/ListPurchasesUseCase';
@@ -42,11 +45,20 @@ import { GetSiteInfoUseCase, UpdateSiteInfoUseCase } from '@core/use-cases/setti
 import { GetVariantHistoryBySkuUseCase, GetAllVariantHistoryUseCase } from '@core/use-cases/product-history/VariantHistoryUseCases';
 import { GetProductsByRegionUseCase } from '@core/use-cases/product/GetProductsByRegionUseCase';
 import { AddProductToWishlistUseCase, RemoveProductFromWishlistUseCase, GetUserWishlistUseCase } from '@core/use-cases/wishlist/WishlistUseCases';
+import { GetFinancialDashboardUseCase } from '@core/use-cases/financial/GetFinancialDashboardUseCase';
 import { SkuService } from '@core/domain/services/SkuService';
 import { DiscountService } from '@core/domain/services/DiscountService';
 import { authService } from '@infrastructure/auth/AuthService';
 import { AppDataSource } from '@infrastructure/database/data-source';
 import { AuditLogModel } from '@infrastructure/database/models/AuditLogModel';
+import { TypeORMPaymentRepository } from '@infrastructure/database/repositories/TypeORMPaymentRepository';
+import { QRCodeService } from '@infrastructure/services/QRCodeService';
+import { IPaymentRepository } from '@core/interfaces/IPaymentRepository';
+import { IQRCodeService } from '@core/interfaces/IQRCodeService';
+import { IPaymentProvider } from '@core/interfaces/IPaymentProvider';
+import { InfinitePayService } from '@infrastructure/services/InfinitePayService';
+import { IFinancialTransactionRepository } from '@core/interfaces/IFinancialTransactionRepository';
+import { TypeORMFinancialTransactionRepository } from '@infrastructure/database/repositories/TypeORMFinancialTransactionRepository';
 
 type Constructor<T = any> = new (...args: any[]) => T;
 
@@ -138,6 +150,10 @@ export const wishlistRepositoryToken = 'IWishlistRepository';
 export const skuServiceToken = 'SkuService';
 export const authServiceToken = 'AuthService';
 export const discountServiceToken = 'DiscountService';
+export const paymentRepositoryToken = 'IPaymentRepository';
+export const qrCodeServiceToken = 'IQRCodeService';
+export const paymentProviderToken = 'IPaymentProvider';
+export const financialTransactionRepositoryToken = 'IFinancialTransactionRepository';
 
 Container.registerSingleton(productRepositoryToken, () => new TypeORMProductRepository());
 Container.registerSingleton(userRepositoryToken, () => new TypeORMUserRepository());
@@ -153,6 +169,10 @@ Container.registerSingleton(wishlistRepositoryToken, () => new TypeORMWishlistRe
 Container.registerSingleton(skuServiceToken, () => new SkuService());
 Container.registerSingleton(authServiceToken, () => authService);
 Container.registerSingleton(discountServiceToken, () => new DiscountService(Container.resolve<IAuditRepository>(auditRepositoryToken)));
+Container.registerSingleton(paymentRepositoryToken, () => new TypeORMPaymentRepository());
+Container.registerSingleton(qrCodeServiceToken, () => new QRCodeService());
+Container.registerSingleton(paymentProviderToken, () => new InfinitePayService());
+Container.registerSingleton(financialTransactionRepositoryToken, () => new TypeORMFinancialTransactionRepository());
 
 Container.registerSingleton('ListProductsUseCase', () => new ListProductsUseCase(Container.resolve(productRepositoryToken)));
 Container.registerSingleton('CreateProductUseCase', () => new CreateProductUseCase(Container.resolve(productRepositoryToken), Container.resolve(skuServiceToken)));
@@ -201,7 +221,8 @@ Container.registerSingleton('DeleteSupplierUseCase', () => new DeleteSupplierUse
 Container.registerSingleton('CreateOrderUseCase', () => new CreateOrderUseCase(
   Container.resolve(orderRepositoryToken),
   Container.resolve(productRepositoryToken),
-  Container.resolve(discountServiceToken)
+  Container.resolve(discountServiceToken),
+  Container.resolve(paymentProviderToken)
 ));
 Container.registerSingleton('UpdateOrderStatusUseCase', () => new UpdateOrderStatusUseCase(Container.resolve(orderRepositoryToken)));
 Container.registerSingleton('CancelOrderUseCase', () => new CancelOrderUseCase(
@@ -210,6 +231,16 @@ Container.registerSingleton('CancelOrderUseCase', () => new CancelOrderUseCase(
 ));
 Container.registerSingleton('ListOrdersUseCase', () => new ListOrdersUseCase(Container.resolve(orderRepositoryToken)));
 Container.registerSingleton('GetOrderByIdUseCase', () => new GetOrderByIdUseCase(Container.resolve(orderRepositoryToken)));
+Container.registerSingleton('ConfirmPaymentUseCase', () => new ConfirmPaymentUseCase(
+  Container.resolve(orderRepositoryToken),
+  Container.resolve(auditRepositoryToken),
+  Container.resolve(financialTransactionRepositoryToken)
+));
+Container.registerSingleton('GetOrderPixUseCase', () => new GetOrderPixUseCase(Container.resolve(orderRepositoryToken)));
+Container.registerSingleton('GeneratePaymentQRCodeUseCase', () => new GeneratePaymentQRCodeUseCase(
+  Container.resolve(qrCodeServiceToken),
+  Container.resolve(paymentRepositoryToken)
+));
 
 Container.registerSingleton('CreatePurchaseUseCase', () => new CreatePurchaseOrderUseCase(
   Container.resolve(purchaseRepositoryToken),
@@ -261,6 +292,9 @@ Container.registerSingleton('RemoveProductFromWishlistUseCase', () => new Remove
 Container.registerSingleton('GetUserWishlistUseCase', () => new GetUserWishlistUseCase(
   Container.resolve<IWishlistRepository>(wishlistRepositoryToken)
 ));
+Container.registerSingleton('GetFinancialDashboardUseCase', () => new GetFinancialDashboardUseCase(
+  Container.resolve<IFinancialTransactionRepository>(financialTransactionRepositoryToken)
+));
 
 export const container = {
   leadRepository: () => Container.resolve<ILeadRepository>(leadRepositoryToken),
@@ -302,6 +336,9 @@ export const container = {
   cancelOrderUseCase: () => Container.resolve<CancelOrderUseCase>('CancelOrderUseCase'),
   listOrdersUseCase: () => Container.resolve<ListOrdersUseCase>('ListOrdersUseCase'),
   getOrderByIdUseCase: () => Container.resolve<GetOrderByIdUseCase>('GetOrderByIdUseCase'),
+  confirmPaymentUseCase: () => Container.resolve<ConfirmPaymentUseCase>('ConfirmPaymentUseCase'),
+  getOrderPixUseCase: () => Container.resolve<GetOrderPixUseCase>('GetOrderPixUseCase'),
+  generatePaymentQRCodeUseCase: () => Container.resolve<GeneratePaymentQRCodeUseCase>('GeneratePaymentQRCodeUseCase'),
 
   createPurchaseUseCase: () => Container.resolve<CreatePurchaseOrderUseCase>('CreatePurchaseUseCase'),
   listPurchasesUseCase: () => Container.resolve<ListPurchasesUseCase>('ListPurchasesUseCase'),
@@ -343,4 +380,6 @@ export const container = {
   addToWishlistUseCase: () => Container.resolve<AddProductToWishlistUseCase>('AddProductToWishlistUseCase'),
   removeFromWishlistUseCase: () => Container.resolve<RemoveProductFromWishlistUseCase>('RemoveProductFromWishlistUseCase'),
   getUserWishlistUseCase: () => Container.resolve<GetUserWishlistUseCase>('GetUserWishlistUseCase'),
+  
+  getFinancialDashboardUseCase: () => Container.resolve<GetFinancialDashboardUseCase>('GetFinancialDashboardUseCase'),
 };

@@ -11,7 +11,7 @@ import { SupplierSchema } from "./mappers/SupplierSchema";
 import { UserProfileSchema } from "./mappers/UserProfileSchema";
 import { CampaignSchema } from "./mappers/CampaignSchema";
 import { SettingsSchema } from "./mappers/SettingsSchema";
-import { AuditLogSchema } from "./mappers/AuditLogSchema";
+import { AuditLogModel } from "./models/AuditLogModel";
 import { ProductHistorySchema } from "./mappers/ProductHistorySchema";
 import { VariantHistorySchema } from "./mappers/VariantHistorySchema";
 import { OrderSchema } from "./mappers/OrderSchema";
@@ -21,7 +21,9 @@ import { PurchaseItemSchema } from "./mappers/PurchaseItemSchema";
 import { LeadSchema } from "./mappers/LeadSchema";
 import { WishlistSchema } from "./mappers/WishlistSchema";
 import { BannerSchema } from "./mappers/BannerSchema";
-
+import { PaymentSchema } from "./mappers/PaymentSchema";
+import { SiteConfigSchema } from "./mappers/SiteConfigSchema";
+import { FinancialTransactionSchema } from "./mappers/FinancialTransactionSchema";
 
 dotenv.config();
 
@@ -47,7 +49,7 @@ synchronize: true,
         SupplierSchema,
         CampaignSchema,
         SettingsSchema,
-        AuditLogSchema,
+        AuditLogModel,
         VariantHistorySchema,
         ProductHistorySchema,
         OrderSchema,
@@ -57,6 +59,9 @@ synchronize: true,
         LeadSchema,
         WishlistSchema,
         BannerSchema,
+        PaymentSchema,
+        SiteConfigSchema,
+        FinancialTransactionSchema,
     ],
     
     // Mantemos o caminho para migrations caso precise no futuro

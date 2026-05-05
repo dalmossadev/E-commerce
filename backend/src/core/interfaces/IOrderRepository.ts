@@ -7,4 +7,5 @@ export interface IOrderRepository {
   update(order: Order): Promise<Order>;
   delete(id: number): Promise<void>;
   findByCustomerId(customerId: number): Promise<Order[]>;
+  findByExternalId(externalId: string): Promise<Order | undefined>;
 }

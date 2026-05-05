@@ -32,6 +32,7 @@ export interface ProductResponseDTO {
   imageName: string;            // Apenas o filename: "produto-6.webp"
   createdAt: Date;
   updatedAt: Date;
+  variants?: ProductVariantDTO[];
 }
 
 export interface ProductVariantDTO {
@@ -42,6 +43,7 @@ export interface ProductVariantDTO {
   size: string;
   price: number;
   stock: number;
+  fulfillmentType?: string;
 }
 
 export interface ListProductsQueryDTO {

@@ -1,5 +1,5 @@
 import { EntitySchema } from "typeorm";
-import { BannerProps } from "../../../domain/Banner";
+import { BannerProps } from "@core/domain/Banner";
 
 export const BannerSchema = new EntitySchema<BannerProps>({
   name: "Banner",

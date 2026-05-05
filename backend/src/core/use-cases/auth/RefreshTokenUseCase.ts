@@ -20,11 +20,23 @@ export class RefreshTokenUseCase {
         throw new AppError('User not found', 404);
       }
 
+      // Validação de rotação: o token deve bater com o último salvo no banco
+      if (user.refreshToken !== refreshToken) {
+        // Possível tentativa de reuse/reuso - invalidar tudo?
+        user.refreshToken = undefined;
+        await this.userRepository.update(user);
+        throw new AppError('Invalid refresh token (reuse detected)', 401);
+      }
+
       const tokens = this.authService.generateTokens({
         id: user.id,
         email: user.email,
         role: user.role as UserRole
       });
+
+      // Salva o novo refresh token
+      user.refreshToken = tokens.refreshToken;
+      await this.userRepository.update(user);
 
       return {
         user: {
@@ -37,6 +49,7 @@ export class RefreshTokenUseCase {
         expiresIn: tokens.expiresIn
       };
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError('Invalid refresh token', 401);
     }
   }

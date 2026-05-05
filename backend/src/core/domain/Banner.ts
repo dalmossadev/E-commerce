@@ -11,34 +11,54 @@ export interface BannerProps {
 }
 
 export class Banner {
-  private props: BannerProps;
+  public readonly id?: string;
+  public readonly title!: string;
+  public readonly subtitle!: string;
+  public readonly cta!: string;
+  public readonly ctaHref!: string;
+  public readonly desktopImage!: string;
+  public readonly mobileImage!: string;
+  public readonly altText!: string;
+  public readonly priority!: boolean;
 
-  constructor(props: BannerProps) {
-    // Validação de Regra de Negócio (Exemplo)
+  constructor(props?: BannerProps) {
+    if (!props) return;
+    this.validate(props);
+
+    this.id = props.id;
+    this.title = props.title;
+    this.subtitle = props.subtitle;
+    this.cta = props.cta;
+    this.ctaHref = props.ctaHref;
+    this.desktopImage = props.desktopImage;
+    this.mobileImage = props.mobileImage;
+    this.altText = props.altText;
+    this.priority = props.priority ?? false;
+  }
+
+  private validate(props: BannerProps): void {
     if (!props.title || props.title.length < 3) {
       throw new Error("O título do banner deve ter pelo menos 3 caracteres.");
     }
-    
-    // Garantimos que o objeto nasce com todos os dados obrigatórios
-    this.props = {
-      ...props,
-      id: props.id ?? crypto.randomUUID() // Gera ID se não fornecido
-    };
+    if (!props.desktopImage) {
+      throw new Error("A imagem desktop é obrigatória.");
+    }
+    if (!props.ctaHref) {
+      throw new Error("O link do CTA é obrigatório.");
+    }
   }
 
-  // Getters para manter o encapsulamento (O-Open/Closed)
-  get id(): string | undefined { return this.props.id; }
-  get title(): string { return this.props.title; }
-  get desktopImage(): string { return this.props.desktopImage; }
-  get priority(): boolean { return this.props.priority; }
-
-  // Se precisar alterar algo, use métodos semânticos, não setters genéricos
-  public updateTitle(newTitle: string): void {
-    if (newTitle.length < 3) throw new Error("Título inválido");
-    this.props.title = newTitle;
-  }
-  
   public toJSON() {
-    return { ...this.props };
+    return {
+      id: this.id,
+      title: this.title,
+      subtitle: this.subtitle,
+      cta: this.cta,
+      ctaHref: this.ctaHref,
+      desktopImage: this.desktopImage,
+      mobileImage: this.mobileImage,
+      altText: this.altText,
+      priority: this.priority
+    };
   }
 }

@@ -10,19 +10,19 @@ export class AuditLogModel {
   userId!: number;
 
   @Column()
-  action!: string; // INSERT, UPDATE, DELETE, LOGIN_SUCCESS... [cite: 13]
+  action!: string; // INSERT, UPDATE, DELETE, LOGIN_SUCCESS... 
 
   @Column({ nullable: true })
-  entity!: string; // Ex: 'Product' [cite: 9]
+  entity!: string; // Ex: 'Product' 
 
   @Column({ nullable: true })
   entityId!: string;
 
   @Column({ type: "json", nullable: true })
-  oldValue: any; // Snapshot antes da alteração [cite: 10]
+  oldValue: any; // Snapshot antes da alteração 
 
   @Column({ type: "json", nullable: true })
-  newValue: any; // Snapshot depois da alteração [cite: 9]
+  newValue: any; // Snapshot depois da alteração 
 
   @Column({ nullable: true })
   ip!: string;

@@ -12,6 +12,11 @@ interface Product {
   sku?: string;
   price?: number;
   imageName?: string;
+  variants?: Array<{
+    id: number;
+    sku: string;
+    fulfillmentType?: string;
+  }>;
 }
 
 export function useWishlistFlow() {
@@ -39,7 +44,7 @@ export function useWishlistFlow() {
     }, 3000);
   }
 
-  const handleHeartClick = useCallback((product: Product) => {
+  const handleHeartClick = useCallback(async (product: Product) => {
     const sku = product.sku || '';
 
     // Se já está na wishlist, remove de ambos
@@ -50,25 +55,57 @@ export function useWishlistFlow() {
       return;
     }
 
-    // Se autenticado, adiciona direto
-    if (isAuthenticated) {
-      toggleWishlist(sku);
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price || 0,
-        imageName: product.imageName || '',
-        sku: sku,
-        quantity: 1
-      });
-      showToast('Adicionado à lista de desejos e ao carrinho!');
-      return;
+    // Tentar obter dados do lead do localStorage para automação
+    const savedPhone = typeof window !== 'undefined' ? localStorage.getItem('lead_phone') : null;
+    const savedName = typeof window !== 'undefined' ? localStorage.getItem('lead_name') : null;
+
+    // Se temos os dados necessários (ou somos autenticados e temos o telefone salvo)
+    if (savedPhone && (isAuthenticated || savedName)) {
+      const name = user?.name || savedName || 'Cliente';
+      const email = user?.email || '';
+      
+      const formData = new FormData();
+      formData.append('sku', sku);
+      formData.append('customerName', name);
+      formData.append('customerPhone', savedPhone);
+      if (email) formData.append('customerEmail', email);
+      formData.append('productId', String(product.id));
+      const variant = product.variants?.[0];
+      const variantId = variant?.id;
+      
+      if (!variantId) {
+        console.warn(`[WishlistFlow] Produto ${product.id} não possui variantes válidas.`, product);
+        showToast('Erro: Este produto não pode ser adicionado ao carrinho no momento.');
+        return;
+      }
+
+      try {
+        await createLeadAction(formData);
+        
+        toggleWishlist(sku);
+        addItem({
+          id: product.id,
+          variantId: variantId,
+          name: product.name,
+          price: product.price || 0,
+          imageName: product.imageName || '',
+          sku: sku,
+          quantity: 1,
+          fulfillmentType: variant?.fulfillmentType
+        });
+        
+        showToast('Adicionado à lista de desejos e ao carrinho!');
+        return;
+      } catch (error) {
+        console.error('Erro ao criar lead automático:', error);
+        // Fallback para o modal se falhar
+      }
     }
 
-    // Se não autenticado, abre modal
+    // Se não temos dados ou falhou, abre modal
     setCurrentProduct(product);
     setIsModalOpen(true);
-  }, [isInWishlist, toggleWishlist, addItem, removeItem, isAuthenticated]);
+  }, [isInWishlist, toggleWishlist, addItem, removeItem, isAuthenticated, user]);
 
   async function createLeadWithData(product: Product, customerName: string, customerPhone: string, customerEmail: string = '') {
     const formData = new FormData();
@@ -95,13 +132,25 @@ export function useWishlistFlow() {
     if (currentProduct) {
       const sku = currentProduct.sku || '';
       toggleWishlist(sku);
+      
+      const variant = currentProduct.variants?.[0];
+      
+      if (!variant?.id) {
+        console.warn(`[WishlistFlow] Produto ${currentProduct.id} não possui variantes válidas.`, currentProduct);
+        showToast('Erro: Este produto não pode ser adicionado ao carrinho no momento.');
+        closeModal();
+        return;
+      }
+      
       addItem({
         id: currentProduct.id,
+        variantId: variant.id,
         name: currentProduct.name,
         price: currentProduct.price || 0,
         imageName: currentProduct.imageName || '',
         sku: sku,
-        quantity: 1
+        quantity: 1,
+        fulfillmentType: variant.fulfillmentType
       });
       showToast('Adicionado à lista de desejos e ao carrinho!');
     }

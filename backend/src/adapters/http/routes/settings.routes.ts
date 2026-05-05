@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { SettingsController } from '../controllers/SettingsController';
-import { validate } from '../middlewares/ValidationMiddleware';
-import { createSettingsSchema, updateSettingsSchema } from '../validations/settings.validation';
+import { SettingsController } from '@adapters/http/controllers/SettingsController';
+import { validate } from '@adapters/http/middlewares/ValidationMiddleware';
+import { createSettingsSchema, updateSettingsSchema } from '@adapters/http/validations/settings.validation';
 
 export { SettingsController };
 

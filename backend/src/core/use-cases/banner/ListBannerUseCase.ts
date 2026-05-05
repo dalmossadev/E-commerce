@@ -1,4 +1,4 @@
-import { IBannerRepository } from "../../../interfaces/IBannerRepository";
+import { IBannerRepository } from "../../interfaces/IBannerRepository";
 
 export class ListBannersUseCase {
   constructor(private bannerRepository: IBannerRepository) {}

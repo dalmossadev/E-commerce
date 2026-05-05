@@ -100,6 +100,28 @@ export default function OrdersPage() {
     }
   };
 
+  const handleConfirmPayment = async (orderId: number) => {
+    if (!confirm('Deseja realmente confirmar o pagamento deste pedido?')) return;
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}/confirm-payment`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Erro ao confirmar pagamento');
+      }
+      
+      setSuccessMessage(`Pagamento do pedido #${orderId} confirmado com sucesso!`);
+      fetchOrders();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Erro ao confirmar pagamento');
+    }
+  };
+
   if (isLoading || isLoadingOrders) {
     return (
       <div className="container-app py-20 text-center">
@@ -214,9 +236,16 @@ export default function OrdersPage() {
                         {order.items.reduce((sum, item) => sum + item.quantity, 0)} item(s)
                       </span>
                     </div>
-                    <p className="text-lg font-bold text-brand-primary">
-                      Total: R$ {(order.total / 100).toFixed(2).replace('.', ',')}
-                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {user?.role?.toUpperCase() === 'ADMIN' && order.status === 'PENDING' && order.paymentMethod === 'PIX' && (
+                        <Button size="sm" variant="outline" onClick={() => handleConfirmPayment(order.id)}>
+                          Confirmar Pagamento
+                        </Button>
+                      )}
+                      <p className="text-lg font-bold text-brand-primary">
+                        Total: R$ {(order.total / 100).toFixed(2).replace('.', ',')}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );

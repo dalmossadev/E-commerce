@@ -1,0 +1,478 @@
+# antigravity.yaml - Configuração de Orquestração Fullstack
+# Sisters Lab Completo — v2.3
+# Sincronizado com: PRD v2.0, TDD v1.6.0, agents.json v1.4, Constitution v2.0
+
+version: "2.3"
+project: "Sisters Lab Completo"
+
+configuracoes:
+  modo: "autonomo"
+  protocolo: "Fullstack Master Protocol v2.3"
+  nivel_validacao: "estrito"
+  arquivo_protocolo: "fullstack-protocol.md"    # OBRIGATÓRIO ler antes de qualquer mudança
+  stack:
+    backend: "Node.js 20 + Express 5 + TypeORM 0.3 + MySQL 8 (porta 3001)"
+    frontend: "Next.js 14 App Router + Tailwind CSS + TypeScript 5.5 (porta 3000)"
+  sistema_de_design:
+    cores: ["#000000", "#FFFFFF", "#00FF00"]
+    border_radius: "0 — proibido em botões e inputs"
+    unidade_fonte: "rem — obrigatório, nunca px"
+    valores_monetarios: "centavos (integer) — nunca float"
+  banco_de_dados:
+    atencao: "Colunas de orders e order_items estão em camelCase no MySQL — verificar DESCRIBE antes de mapear"
+    regra: "SEMPRE rodar DESCRIBE tabela antes de criar ou alterar EntitySchema"
+
+# ─────────────────────────────────────────
+# INVOCAÇÕES ATIVAS
+# ─────────────────────────────────────────
+
+invocacoes:
+
+  - id: "corrigir-valor-pix"
+    agente: "especialista-pagamento"
+    prioridade: "critica"
+    status: "ativo"
+    objetivo: "Corrigir QRCode PIX exibindo R$ 0,00 — campo total não mapeado e corrigir mapeamento camelCase das tabelas orders/order_items"
+    modo: "autonomo"
+    aguardar_confirmacao: false
+
+    contexto:
+      causa_raiz: "OrderSchema mapeia totalValue que não existe no banco — campo correto é total"
+      descoberta: "Colunas de orders e order_items estão em camelCase no MySQL — não usar name: snake_case"
+      estrutura_real_orders: "id, customerId, customerName, customerEmail, customerPhone, shippingAddress, subtotal, discount, total, status, paymentMethod, notes, createdAt, updatedAt, paymentConfirmedAt"
+      estrutura_real_order_items: "id, orderId, variantId, sku, productName, color, size, quantity, unitPrice, totalPrice, fulfillmentType"
+
+    ler_primeiro:
+      - "fullstack-protocol.md"
+      - "backend/src/infrastructure/database/mappers/OrderSchema.ts"
+      - "backend/src/infrastructure/database/mappers/OrderItemSchema.ts"
+      - "backend/src/core/domain/Order.ts"
+      - "backend/src/core/use-cases/orders/GetOrderPixUseCase.ts"
+      - "backend/src/infrastructure/pix/PixService.ts"
+      - "backend/src/infrastructure/database/repositories/TypeORMOrderRepository.ts"
+      - "backend/src/core/use-cases/orders/CreateOrderUseCase.ts"
+      - "shop-varejo/src/app/checkout/page.tsx"
+
+    corrigir_nesta_ordem:
+
+      - "CORREÇÃO 1 — OrderSchema.ts:
+          Remover todos name: snake_case — colunas já são camelCase no banco
+          Mapeamento correto baseado no DESCRIBE real:
+            subtotal: { type: int }
+            discount: { type: int }
+            total: { type: int }
+            customerName: { type: varchar }
+            customerEmail: { type: varchar }
+            customerPhone: { type: varchar }
+            shippingAddress: { type: text, nullable: true }
+            paymentMethod: { type: varchar, nullable: true }
+            paymentConfirmedAt: { type: timestamp, nullable: true }"
+
+      - "CORREÇÃO 2 — OrderItemSchema.ts:
+          Remover todos name: snake_case
+          Mapeamento correto:
+            orderId, variantId, sku, productName, color, size,
+            quantity, unitPrice, totalPrice, fulfillmentType"
+
+      - "CORREÇÃO 3 — Order.ts domínio:
+          Garantir campos: subtotal, discount, total (não totalValue)
+          calculateTotal(): number — retorna subtotal - discount
+          Se existir totalValue como alias: adicionar getter total() { return this.subtotal - this.discount }"
+
+      - "CORREÇÃO 4 — GetOrderPixUseCase.ts:
+          Substituir toda referência a order.totalValue por order.total
+          amount passado ao PixService deve ser order.total (centavos)"
+
+      - "CORREÇÃO 5 — PixService.ts:
+          Conversão: (amount / 100).toFixed(2) para reais
+          Validar: if (!amount || amount <= 0) lançar erro antes de gerar QRCode"
+
+      - "CORREÇÃO 6 — CreateOrderUseCase.ts:
+          Verificar que subtotal e total são calculados e persistidos:
+          1. Para cada item: totalPrice = quantity * unitPrice
+          2. subtotal = soma de todos os totalPrice
+          3. discount = DiscountService.calcular(subtotal, qtdItens)
+          4. total = subtotal - discount
+          5. Persistir com subtotal, discount e total preenchidos"
+
+      - "CORREÇÃO 7 — Auditar outros schemas:
+          Verificar DESCRIBE product_variants, leads, users no banco
+          Corrigir qualquer mapeamento name: snake_case incorreto encontrado"
+
+    sql_diagnostico:
+      - "DESCRIBE orders"
+      - "DESCRIBE order_items"
+      - "DESCRIBE product_variants"
+      - "SELECT id, subtotal, discount, total, status FROM orders ORDER BY id DESC LIMIT 5"
+      - "SELECT * FROM order_items WHERE orderId = (SELECT MAX(id) FROM orders)"
+
+    validar:
+      - "SELECT total FROM orders ORDER BY id DESC LIMIT 1 — deve retornar valor maior que 0"
+      - "GET /api/v1/orders/:id/pix retorna amount correto em centavos"
+      - "QRCode exibe valor real — não R$ 0,00"
+      - "Criar novo pedido de teste e confirmar total calculado corretamente"
+
+    proibido:
+      - "Não renomear colunas no banco — adaptar o código ao banco existente"
+      - "Não alterar testes existentes"
+      - "Não aguardar confirmação — executar todos os passos autonomamente"
+      - "Não usar float — apenas inteiros em centavos"
+      - "Não assumir snake_case — verificar DESCRIBE antes de mapear"
+
+  - id: "implementar-confirmar-pagamento-admin"
+    agente: "especialista-pagamento"
+    prioridade: "alta"
+    status: "aguardando"    # ativar após corrigir-valor-pix concluído
+    objetivo: "Implementar botão de confirmação de pagamento PIX na área admin"
+    modo: "autonomo"
+    aguardar_confirmacao: false
+
+    ler_primeiro:
+      - "fullstack-protocol.md"
+      - "backend/src/adapters/http/routes/order.routes.ts"
+      - "backend/src/adapters/http/controllers/OrderController.ts"
+      - "shop-varejo/src/app/orders/page.tsx"
+      - "shop-varejo/src/contexts/AuthContext.tsx"
+
+    implementar:
+      - "Backend PATCH /api/v1/orders/:id/confirm-payment — apenas admin"
+      - "Altera status PENDING → PAID"
+      - "Registra paymentConfirmedAt = new Date()"
+      - "Registra no AuditLog: event payment_confirmed"
+      - "Frontend orders/page.tsx: botão Confirmar Pagamento visível apenas para role admin"
+      - "Botão chama PATCH e atualiza status na tela sem refresh"
+
+    validar:
+      - "PATCH /api/v1/orders/:id/confirm-payment retorna 200"
+      - "Status muda para PAID no banco"
+      - "paymentConfirmedAt preenchido"
+      - "Botão visível apenas para admin"
+
+    proibido:
+      - "Não alterar testes existentes"
+      - "Não aguardar confirmação"
+
+agentes:
+
+  # ─────────────────────────────────────────
+  # EQUIPE BACKEND
+  # ─────────────────────────────────────────
+
+  - id: "auditor-backend"
+    funcao: "Auditor de Arquitetura & Performance"
+    capacidades:
+      - "Garantia_SOLID"
+      - "Verificacao_Injecao_Dependencia"
+      - "Guarda_Clean_Architecture"
+      - "Validacao_Performance"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/core/container/Container.ts"
+      - "backend/src/core/use-cases/"
+      - "backend/src/adapters/http/controllers/"
+      - "backend/src/infrastructure/database/repositories/"
+    diretrizes:
+      - "Ler fullstack-protocol.md antes de qualquer alteração"
+      - "Use Cases NUNCA importam TypeORM, Express ou qualquer framework"
+      - "Controllers NUNCA contêm lógica de negócio"
+      - "Todo repositório registrado no Container.ts como singleton"
+      - "Transações de pedido em menos de 100ms"
+      - "Valores monetários: NUNCA float — apenas inteiros em centavos"
+      - "FK com RESTRICT — sem deleção em cascata"
+
+  - id: "especialista-seguranca"
+    funcao: "Especialista em Segurança & Autenticação"
+    capacidades:
+      - "Hardening_JWT"
+      - "Rate_Limiting"
+      - "Sanitizacao_Input"
+      - "Politica_CORS"
+      - "Seguranca_Cookie"
+      - "Prevencao_SQL_Injection"
+      - "Seguranca_Pagamento_QRCode"
+      - "Depuracao_Autenticacao"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/infrastructure/auth/AuthService.ts"
+      - "backend/src/adapters/http/middlewares/AuthMiddleware.ts"
+      - "backend/src/adapters/http/middlewares/RateLimitMiddleware.ts"
+      - "backend/src/adapters/http/routes/auth.routes.ts"
+      - "backend/src/core/use-cases/auth/LoginUseCase.ts"
+      - "backend/src/core/use-cases/auth/RefreshTokenUseCase.ts"
+      - "backend/src/infrastructure/database/mappers/UserSchema.ts"
+      - "backend/src/core/container/Container.ts"
+      - "shop-varejo/middleware.ts"
+      - "shop-varejo/app/api/auth/"
+    diretrizes:
+      - "JWT em cookie httpOnly __session — NUNCA exposto no cliente"
+      - "Rate Limiting: 5 req/15min em /login e /register"
+      - "Refresh Token com rotação — token antigo invalidado após uso"
+      - "CORS: apenas localhost:3000 em dev"
+      - "Todos os inputs validados via Zod antes de atingir Use Cases"
+      - "Segredos NUNCA hardcoded — sempre variável de ambiente"
+      - "auth.routes.ts: injetar IUserRepository — NUNCA IProductRepository"
+      - "UserSchema: password mapeado corretamente — verificar DESCRIBE users"
+
+  - id: "especialista-pagamento"
+    funcao: "Especialista em Pagamento PIX & QRCode"
+    capacidades:
+      - "Geracao_PIX_QRCode"
+      - "Processamento_Confirmacao_Manual"
+      - "Maquina_Estado_Pagamento"
+      - "Fluxo_Confirmacao_Pedido"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/core/domain/Order.ts"
+      - "backend/src/infrastructure/pix/PixService.ts"
+      - "backend/src/core/use-cases/orders/GetOrderPixUseCase.ts"
+      - "backend/src/core/use-cases/orders/CreateOrderUseCase.ts"
+      - "backend/src/infrastructure/database/mappers/OrderSchema.ts"
+      - "backend/src/adapters/http/routes/order.routes.ts"
+      - "shop-varejo/src/app/checkout/page.tsx"
+    diretrizes:
+      - "Ler DESCRIBE orders ANTES de qualquer alteração no OrderSchema"
+      - "Campo correto para valor total é total — não totalValue"
+      - "Colunas de orders são camelCase no banco — sem name: snake_case"
+      - "Conversão centavos para reais: (amount / 100).toFixed(2)"
+      - "PIX MVP: manual sem webhook — admin confirma via PATCH /confirm-payment"
+      - "QRCode expira em 30 minutos"
+      - "Fluxo: PENDING → QRCode gerado → admin confirma → PAID"
+      - "Validar amount > 0 antes de gerar payload"
+
+  - id: "agent-financial-core"
+    funcao: "Agent Financial Core — Orders, Payments & Accounting"
+    capacidades:
+      - "Responsavel_Fluxo_Financeiro"
+      - "Gestao_Pedidos_Pagamentos"
+      - "Conciliacao_InfinitPay"
+      - "Modelagem_Contabil_Ledger"
+    arquivos_contexto:
+      - "backend/src/core/domain/Order.ts"
+      - "backend/src/core/domain/OrderItem.ts"
+      - "backend/src/core/use-cases/orders/CreateOrderUseCase.ts"
+      - "backend/src/infrastructure/database/mappers/OrderSchema.ts"
+      - "backend/src/infrastructure/database/mappers/OrderItemSchema.ts"
+      - "backend/src/infrastructure/database/repositories/TypeORMOrderRepository.ts"
+      - "backend/src/adapters/http/controllers/OrderController.ts"
+      - "backend/src/adapters/http/routes/order.routes.ts"
+    diretrizes:
+      - "Garantir que tabelas orders e order_items existem e estão sincronizadas com TypeORM."
+      - "Validar migrations e sincronização do banco."
+      - "Implementar fluxo de pagamento PIX com gateway (InfinitPay)."
+      - "Separar status do pedido (order) e status do pagamento (payment)."
+      - "Preparar estrutura para conciliação manual (MVP) e futura automação."
+      - "Criar base de ledger financeiro (entradas/saídas) sem quebrar sistema atual."
+      - "NÃO alterar testes existentes."
+      - "NÃO quebrar fluxo de criação de pedidos."
+
+  - id: "especialista-crm"
+    funcao: "Gestão de Leads, Wishlist & Retenção"
+    capacidades:
+      - "Logica_Conversao_Lead"
+      - "Integracao_Wishlist"
+      - "Sincronizacao_Carrinho"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/core/domain/Lead.ts"
+      - "backend/src/core/use-cases/CreateLeadUseCase.ts"
+      - "backend/src/infrastructure/database/mappers/LeadSchema.ts"
+      - "shop-varejo/src/hooks/useWishlistFlow.ts"
+      - "shop-varejo/src/contexts/CartContext.tsx"
+      - "shop-varejo/src/components/WishlistQuickModal.tsx"
+    diretrizes:
+      - "Clicar no coração: Lead PENDING + wishlist + carrinho atomicamente"
+      - "Remover coração: remove wishlist + carrinho — Lead permanece no banco"
+      - "variantId sempre como number — nunca string"
+      - "productId e variantId preenchidos no Lead quando disponíveis"
+      - "Modal não interrompe intenção — continua fluxo após submit"
+
+  - id: "arquiteto-dados"
+    funcao: "Mapeamento ORM & Integridade do Banco"
+    capacidades:
+      - "Otimizacao_TypeORM"
+      - "Sincronizacao_Schema"
+      - "Gestao_Migrations"
+      - "Auditoria_Colunas"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/infrastructure/database/mappers/"
+      - "backend/src/infrastructure/database/data-source.ts"
+      - "backend/src/infrastructure/database/migrations/"
+    diretrizes:
+      - "SEMPRE rodar DESCRIBE tabela antes de criar ou alterar EntitySchema"
+      - "Não assumir snake_case — verificar nome físico real da coluna"
+      - "orders e order_items: colunas em camelCase — sem name: snake_case"
+      - "imageUrl NÃO existe no banco — gerado dinamicamente no Use Case"
+      - "Nunca usar synchronize: true em produção"
+      - "Scripts de migration com tsconfig-paths para resolver aliases @core"
+      - "FK com RESTRICT — sem CASCADE DELETE"
+
+  # ─────────────────────────────────────────
+  # EQUIPE FRONTEND
+  # ─────────────────────────────────────────
+
+  - id: "arquiteto-ux"
+    funcao: "Arquiteto de Experiência, Fluxos & Acessibilidade"
+    capacidades:
+      - "Otimizacao_Fluxo_Usuario"
+      - "Acessibilidade_A11Y_WCAG21"
+      - "HTML_Semantico"
+      - "Navegacao_Teclado"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "shop-varejo/src/hooks/"
+      - "shop-varejo/src/components/SkipToContent.tsx"
+      - "shop-varejo/src/components/FontSizeControls.tsx"
+      - "shop-varejo/app/"
+    diretrizes:
+      - "Ler fullstack-protocol.md antes de criar qualquer página ou componente"
+      - "Skip-to-content como primeiro elemento de cada página"
+      - "aria-label, aria-live, aria-pressed, aria-modal em todos os elementos interativos"
+      - "Focus trap em modais e CartDrawer"
+      - "font-size sempre em rem — nunca px"
+      - "loading.tsx e error.tsx em cada rota do App Router"
+
+  - id: "desenvolvedor-ui"
+    funcao: "Guardião do Design System P&B"
+    capacidades:
+      - "Especialista_Tailwind"
+      - "Aplicacao_Tokens_Design"
+      - "Animacoes_Polidas"
+      - "Skeleton_Loaders"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "shop-varejo/app/globals.css"
+      - "shop-varejo/tailwind.config.js"
+      - "shop-varejo/src/components/"
+      - "shop-varejo/src/constants/site-config.ts"
+    diretrizes:
+      - "Paleta IMUTÁVEL: #000000, #FFFFFF, #00FF00"
+      - "PROIBIDO border-radius em botões e inputs"
+      - "font-size em calc(var(--font-scale) * N)"
+      - "Skeleton loaders em #F5F5F5 com animação pulse"
+      - "Botão primário: bg-black text-white hover:bg-gray-900"
+      - "Timer PIX: text-red-600 — único uso permitido fora da paleta"
+
+  - id: "especialista-integracao-fe"
+    funcao: "Especialista em Integração API & State Management"
+    capacidades:
+      - "Server_Actions_NextJS"
+      - "Mapeamento_Dados_API"
+      - "Gerenciamento_Contexto"
+      - "Polling_Tempo_Real"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "shop-varejo/src/hooks/"
+      - "shop-varejo/src/lib/api/"
+      - "shop-varejo/src/contexts/"
+      - "shop-varejo/src/modules/"
+      - "shop-varejo/src/constants/site-config.ts"
+    diretrizes:
+      - "Resposta paginada: sempre extrair response.data"
+      - "Imagens: src = /img/catalogo/{imageName}"
+      - "NEXT_PUBLIC_API_URL aponta para backend porta 3001"
+      - "variantId sempre como number — nunca string"
+      - "CartContext expõe: items[], addItem(), removeItem(), updateQuantity(), clearCart(), totalItems, totalPrice"
+      - "Nunca expor JWT no cliente — apenas cookie httpOnly __session"
+
+  # ─────────────────────────────────────────
+  # QUALIDADE & VALIDAÇÃO
+  # ─────────────────────────────────────────
+    
+  - id: "motor-qa"
+    funcao: "Garantia de Qualidade & Testes"
+    capacidades:
+      - "Testes_Integracao"
+      - "Testes_Unitarios"
+      - "Validacao_Performance"
+      - "Validacao_Visual"
+    arquivos_contexto:
+      - "fullstack-protocol.md"
+      - "backend/src/__tests__/"
+      - "shop-varejo/src/__tests__/"
+    diretrizes:
+      - "NUNCA alterar ou deletar os 163+ testes existentes"
+      - "Testes de integração usam banco real — PROIBIDO mock de persistência"
+      - "Validar HTTP 200 de imagens antes de release"
+
+  - id: "agent-architecture-auditor"
+    funcao: "Agent Architecture Auditor — TDD Sync & System Audit"
+    capacidades:
+      - "Auditoria_Arquitetural"
+      - "Sincronizacao_Documentacao"
+      - "Identificacao_Divergencias"
+      - "Atualizacao_TDD"
+    arquivos_contexto:
+      - "TDD.md"
+      - "backend/src/"
+      - "shop-varejo/src/"
+    diretrizes:
+      - "Ler todo o código do projeto (backend e frontend)."
+      - "Comparar o estado atual com o documento TDD.md existente."
+      - "Identificar divergências entre documentação e implementação real."
+      - "Atualizar o TDD.md para refletir EXATAMENTE o que está implementado."
+      - "Documentar endpoints reais, fluxos reais, entidades reais e regras de negócio reais."
+      - "Remover ou marcar como deprecated qualquer funcionalidade que não existe mais."
+      - "Adicionar funcionalidades novas que não estão documentadas."
+      - "Gerar um TDD.md confiável como fonte única da verdade (single source of truth)."
+      - "NÃO alterar código do sistema — apenas documentação."
+      - "Manter linguagem clara, técnica e organizada."
+      - "Performance: transações < 100ms, QRCode < 500ms"
+      - "Frontend: Jest + Testing Library para hooks e contextos"
+      - "MSW handlers para todos os endpoints consumidos pelo frontend"
+
+  # ─────────────────────────────────────────
+  # EQUIPE DEVOPS
+  # ─────────────────────────────────────────
+
+  - id: "agent-devops-git"
+    funcao: "Agent DevOps — Git & Version Control"
+    capacidades:
+      - "Gerenciamento_Git"
+      - "Boas_Praticas_Commits"
+      - "Protecao_Secrets"
+    arquivos_contexto:
+      - ".gitignore"
+    diretrizes:
+      - "Executar comandos git com segurança."
+      - "Nunca commitar arquivos sensíveis (.env, secrets)."
+      - "Gerar mensagens de commit claras e padronizadas."
+      - "Agrupar mudanças relacionadas em um único commit."
+      - "Garantir que o repositório está consistente antes do push."
+      - "Não forçar push sem necessidade."
+
+# ─────────────────────────────────────────
+# PROTOCOLO DE EXECUÇÃO
+# ─────────────────────────────────────────
+
+protocolo_execucao:
+  passo_zero_obrigatorio:
+    - "Ler fullstack-protocol.md ANTES de qualquer mudança de código ou banco"
+    - "Rodar DESCRIBE tabela antes de criar ou alterar qualquer EntitySchema"
+
+  antes_de_qualquer_mudanca:
+    - "Ler todos os arquivos de contexto listados no agente"
+    - "Não escrever código antes de entender o estado atual"
+    - "Verificar DESCRIBE de cada tabela envolvida"
+
+  antes_de_commitar:
+    - "npm run typecheck no backend e frontend"
+    - "npm run lint no backend e frontend"
+    - "cd backend && npm test — 163+ testes devem passar"
+
+  sempre_proibido:
+    - "Float para valores monetários"
+    - "border-radius em botões e inputs"
+    - "px em font-size"
+    - "JWT fora de cookie httpOnly"
+    - "Lógica de negócio em Controllers"
+    - "TypeORM importado em Use Cases"
+    - "Alterar ou deletar testes existentes"
+    - "Segredos hardcoded no código"
+    - "synchronize: true no TypeORM em produção"
+    - "Cores além de #000, #FFF, #00FF00 (exceto text-red-600 no timer PIX)"
+    - "productRepository injetado em auth.routes.ts"
+    - "Deletar Lead ao remover da wishlist"
+    - "name: snake_case em OrderSchema ou OrderItemSchema"
+    - "Assumir estrutura de colunas sem rodar DESCRIBE"
+    - "variantId como string — sempre number"

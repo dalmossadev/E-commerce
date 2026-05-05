@@ -26,6 +26,16 @@ function mapProductToDTO(product: any): ProductResponseDTO {
     imageName: product.imageName,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+    variants: product.variants?.map((v: any) => ({
+      id: v.id,
+      sku: v.sku,
+      productId: v.productId,
+      color: v.color,
+      size: v.size,
+      price: v.price,
+      stock: v.stock,
+      fulfillmentType: v.fulfillmentType
+    })) || []
   };
 }
 

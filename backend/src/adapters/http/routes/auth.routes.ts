@@ -5,7 +5,9 @@ import { LoginDTO, RegisterDTO, RefreshTokenDTO } from '@core/dto/AuthDTO';
 import { container } from '@core/container/Container';
 import { AppError } from '@core/errors/AppError';
 import { authService } from '@infrastructure/auth/AuthService';
-import { authRateLimit } from '@adapters/http/middlewares/RateLimitMiddleware';
+import { loginSchema, registerSchema, refreshTokenSchema } from '../validations/auth.validation';
+import { validate } from '../middlewares/ValidationMiddleware';
+import { authRateLimit } from '../middlewares/RateLimitMiddleware';
 
 const authRouter = Router();
 
@@ -15,11 +17,20 @@ const refreshTokenUseCase = container.refreshTokenUseCase();
 authRouter.get('/me', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const cookieToken = req.cookies?.__session;
+    
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (cookieToken) {
+      token = cookieToken;
+    }
+
+    if (!token) {
       throw new AppError('No token provided', 401);
     }
 
-    const token = authHeader.substring(7);
     const payload = authService.verifyAccessToken(token);
 
     const user = await container.userRepository().findById(payload.sub);
@@ -39,7 +50,7 @@ authRouter.get('/me', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
-authRouter.post('/login', authRateLimit, async (req: Request, res: Response, next: NextFunction) => {
+authRouter.post('/login', validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: LoginDTO = req.body;
     const result = await authUseCases.login(data);
@@ -49,7 +60,7 @@ authRouter.post('/login', authRateLimit, async (req: Request, res: Response, nex
   }
 });
 
-authRouter.post('/register', authRateLimit, async (req: Request, res: Response, next: NextFunction) => {
+authRouter.post('/register', authRateLimit, validate(registerSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: RegisterDTO = req.body;
     const result = await authUseCases.register(data);
@@ -59,7 +70,7 @@ authRouter.post('/register', authRateLimit, async (req: Request, res: Response, 
   }
 });
 
-authRouter.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+authRouter.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: RefreshTokenDTO = req.body;
     const result = await refreshTokenUseCase.execute(data.refreshToken);

@@ -62,6 +62,15 @@ export async function POST(request: NextRequest) {
       headers['Authorization'] = `Bearer ${sessionToken}`;
     }
 
+    // Log diagnóstico detalhado de tipos
+    console.log('[/api/orders POST] payload enviado ao backend:');
+    if (body.items && Array.isArray(body.items)) {
+      body.items.forEach((item: any, idx: number) => {
+        console.log(`  - Item[${idx}]: variantId=${item.variantId} (${typeof item.variantId}), sku=${item.sku}`);
+      });
+    }
+    console.log('Full body:', JSON.stringify(body, null, 2));
+
     const response = await fetch(`${API_BASE_URL}/api/v1/orders`, {
       method: 'POST',
       headers,
@@ -70,11 +79,12 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
+    // Log diagnóstico — remover após validação
+    console.log('[/api/orders POST] resposta do backend:', response.status, JSON.stringify(data));
+
     if (!response.ok) {
-      return NextResponse.json(
-        { error: data.error || 'Falha ao criar pedido' },
-        { status: response.status }
-      );
+      // Repassar erros de validação do backend diretamente (status + errors[])
+      return NextResponse.json(data, { status: response.status });
     }
 
     return NextResponse.json(data, { status: 201 });

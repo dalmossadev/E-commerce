@@ -9,6 +9,7 @@ export class User {
   password!: string;
   name?: string;
   role!: UserRole;
+  refreshToken?: string;
   createdAt!: Date;
   updatedAt!: Date;
 

@@ -81,4 +81,12 @@ export class TypeORMOrderRepository implements IOrderRepository {
       order: { createdAt: 'DESC' }
     });
   }
+
+  async findByExternalId(externalId: string): Promise<Order | undefined> {
+    const order = await this.repository.findOne({
+      where: { paymentExternalId: externalId },
+      relations: ['items']
+    });
+    return order || undefined;
+  }
 }

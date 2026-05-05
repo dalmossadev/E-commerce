@@ -18,6 +18,7 @@ export enum PaymentMethod {
 export class OrderItem {
   id!: number;
   orderId!: number;
+  order!: any; // Relacionamento com Order
   variantId!: number;
   sku!: string;
   productName!: string;
@@ -56,6 +57,11 @@ export class Order {
   status!: OrderStatus;
   paymentMethod?: PaymentMethod;
   notes?: string;
+  paymentConfirmedAt?: Date;
+  paymentProvider?: string;
+  paymentExternalId?: string;
+  paymentStatus?: string;
+  paymentQrCode?: string;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -186,6 +192,7 @@ export class Order {
     }
     this.paymentMethod = paymentMethod;
     this.status = OrderStatus.PAID;
+    this.paymentConfirmedAt = new Date();
     this.updatedAt = new Date();
   }
 

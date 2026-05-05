@@ -16,7 +16,13 @@ async function seedAdmin() {
     });
 
     if (existingAdmin) {
-      console.log('⚠️  Admin user already exists');
+      console.log('⚠️  Admin user already exists. Updating password...');
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      existingAdmin.password = hashedPassword;
+      existingAdmin.name = 'Admin Sisters Lab';
+      existingAdmin.role = UserRole.ADMIN;
+      await userRepository.save(existingAdmin);
+      console.log('✅ Admin user updated successfully');
       await AppDataSource.destroy();
       process.exit(0);
     }

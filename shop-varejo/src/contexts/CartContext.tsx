@@ -48,16 +48,27 @@ function saveCart(items: CartItem[]) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(loadCart);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    saveCart(items);
-  }, [items]);
+    const loaded = loadCart();
+    setItems(loaded);
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      saveCart(items);
+    }
+  }, [items, isInitialized]);
 
   const addItem = (newItem: CartItem) => {
     // Fill compatibility fields if missing
     if (!newItem.productName) newItem.productName = newItem.name;
     if (!newItem.unitPrice) newItem.unitPrice = newItem.price;
+    if (newItem.variantId) newItem.variantId = Number(newItem.variantId);
+    if (newItem.id) newItem.id = Number(newItem.id);
 
     setItems(prev => {
       const existing = prev.find(item => item.sku === newItem.sku);
@@ -90,7 +101,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setItems([]);
 
-  const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.unitPrice ?? item.price) * item.quantity, 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (

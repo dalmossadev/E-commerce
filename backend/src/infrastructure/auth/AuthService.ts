@@ -10,8 +10,11 @@ export class JwtService {
   private readonly refreshExpiresIn: string;
 
   constructor() {
-    this.accessSecret = process.env.JWT_ACCESS_SECRET || 'access-secret-key-change-in-production';
-    this.refreshSecret = process.env.JWT_REFRESH_SECRET || 'refresh-secret-key-change-in-production';
+    if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+      throw new Error('JWT Secrets (ACCESS and REFRESH) must be defined in environment variables');
+    }
+    this.accessSecret = process.env.JWT_ACCESS_SECRET;
+    this.refreshSecret = process.env.JWT_REFRESH_SECRET;
     this.accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
     this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
   }

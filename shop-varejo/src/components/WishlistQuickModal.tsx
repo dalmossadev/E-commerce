@@ -9,6 +9,7 @@ interface WishlistQuickModalProps {
   productName: string;
   sku: string;
   productId: number;
+  variantId?: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -20,6 +21,7 @@ export function WishlistQuickModal({
   productName,
   sku,
   productId,
+  variantId,
   isOpen,
   onClose,
   onSuccess,
@@ -35,9 +37,9 @@ export function WishlistQuickModal({
   // Resetar formulário quando o modal abre ou dados iniciais mudam
   useEffect(() => {
     if (isOpen) {
-      setName(initialName);
-      setEmail(initialEmail);
-      setPhone('');
+      setName(initialName || localStorage.getItem('lead_name') || '');
+      setEmail(initialEmail || localStorage.getItem('lead_email') || '');
+      setPhone(localStorage.getItem('lead_phone') || '');
       setError('');
     }
   }, [isOpen, initialName, initialEmail]);
@@ -57,12 +59,18 @@ export function WishlistQuickModal({
     formData.append('customerPhone', phone);
     if (email) formData.append('customerEmail', email);
     formData.append('productId', String(productId));
+    if (variantId) formData.append('variantId', String(variantId));
 
     const result = await createLeadAction(formData);
 
     setLoading(false);
 
     if (result.success) {
+      // Salva no localStorage para automação futura
+      localStorage.setItem('lead_name', name);
+      localStorage.setItem('lead_phone', phone);
+      if (email) localStorage.setItem('lead_email', email);
+
       onSuccess();
       // Limpa campos
       setName('');

@@ -1,286 +1,716 @@
 # TDD - Test Driven Development
+## Sisters Lab Completo
 
-**Projeto:** Sisters Lab Completo  
-**Data:** 30/04/2026  
-**Status:** Em andamento (Sprint 02/03)
+**Data:** 04/05/2026
+**Status:** MVP Financeiro Concluído (Sprint 02)
+**Versão:** 1.7.0
 
 ---
 
 ## 1. Visão Geral
 
-Este documento descreve a estratégia de Test Driven Development (TDD) adotada no projeto Sisters Lab Completo, um sistema ERP híbrido para e-commerce de calçados premium.
+Sistema ERP híbrido full-stack para e-commerce de calçados premium. TDD aplicado em todas as camadas seguindo Clean Architecture.
 
-### Princípios TDD
-- **Red-Green-Refactor:** Escrever testes que falham, implementar código, refatorar
-- **Clean Architecture:** Testes seguem a hierarquia de camadas (Domain → Use Cases → Adapters)
+### Princípios
+- **Red-Green-Refactor:** Escrever testes que falham → implementar → refatorar
+- **Clean Architecture:** Testes seguem hierarquia Domain → Use Cases → Adapters
 - **Cobertura Crítica:** Foco em regras de negócio e fluxos essenciais
-- **Automação:** Testes executados em CI/CD (planejado)
+- **Sem mock de persistência:** Testes de integração usam banco real
 
 ---
 
-## 2. Arquitetura de Testes
+## 2. Stack Técnica
 
-### 2.1 Backend (TypeScript + Jest + Supertest)
+| Tecnologia | Versão |
+|------------|--------|
+| TypeScript (backend) | 5.4.5 |
+| TypeScript (frontend) | 5.5 |
+| Express | 5.2.1 |
+| Next.js | 14 (App Router) |
+| TypeORM | 0.3.28 |
+| MySQL | 8+ (local, sem Docker) |
+| JWT | - |
+| Jest | 29.7.0 |
+| Zod | 4.3.6 |
+| Tailwind CSS | 3.4 |
+| Supertest | - |
+| MSW | - |
+| Testing Library | - |
+
+### Arquitetura
+- **Clean Architecture** — Domain, Use Cases, Interfaces, Infrastructure, Adapters
+- **SOLID** — SRP, OCP, LSP, ISP, DIP
+- **MVC** — Model (Domain + Repositories), View (DTOs), Controller (HTTP)
+- **DI Container** — Inversão de dependência via Container.ts
+- **Design System P&B** — #000000, #FFFFFF, #00FF00 (imutáveis)
+
+---
+
+## 3. Estrutura de Pastas
+
+### 3.1 Backend (`backend/`)
 
 ```
-backend/src/__tests__/
-├── unit/                      # Testes Unitários
-│   ├── lead.test.ts           # Entidade Lead (domínio)
-│   ├── order.test.ts          # Entidade Order (domínio)
-│   ├── purchase.test.ts       # Entidade Purchase (domínio)
-│   ├── wishlist.test.ts       # Entidade Wishlist (domínio)
-│   ├── CreateLeadUseCase.test.ts
-│   ├── CreateOrderUseCase.test.ts
-│   ├── CreateCampaignUseCase.test.ts
-│   ├── GetSettingsUseCase.test.ts
-│   ├── ListCustomersUseCase.test.ts
-│   ├── ReceiveInventoryUseCase.test.ts
-│   ├── WishlistUseCases.test.ts    # Wishlist use cases
-│   └── controllers/
-│       └── product.controller.test.ts
-├── integration/                # Testes de Integração
-│   ├── leads.test.ts          # API REST Leads
-│   ├── orders.test.ts         # API REST Orders
-│   ├── purchases.test.ts      # API REST Purchases
-│   ├── upload.test.ts         # Upload de imagens
-│   └── wishlist.test.ts      # API REST Wishlist
-├── performance.test.ts         # Testes de carga
-└── setup.ts                   # Configuração global
+backend/
+└── src/
+    ├── adapters/http/
+    │   ├── controllers/
+    │   │   ├── LeadController.ts
+    │   │   ├── ProductController.ts
+    │   │   ├── SupplierController.ts
+    │   │   ├── OrderController.ts
+    │   │   ├── PurchaseController.ts
+    │   │   ├── CampaignController.ts
+    │   │   ├── CustomerController.ts
+    │   │   ├── ProductHistoryController.ts
+    │   │   ├── SettingsController.ts
+    │   │   └── PaymentController.ts
+    │   ├── middlewares/
+    │   │   ├── AuthMiddleware.ts
+    │   │   ├── ErrorHandler.ts
+    │   │   ├── LogMiddleware.ts
+    │   │   ├── RateLimitMiddleware.ts
+    │   │   └── ValidationMiddleware.ts
+    │   ├── routes/
+    │   │   ├── admin.routes.ts
+    │   │   ├── auth.routes.ts
+    │   │   ├── health.routes.ts
+    │   │   ├── lead.routes.ts
+    │   │   ├── product.routes.ts
+    │   │   ├── supplier.routes.ts
+    │   │   ├── user.routes.ts
+    │   │   ├── order.routes.ts
+    │   │   ├── purchase.routes.ts
+    │   │   ├── campaign.routes.ts
+    │   │   ├── customer.routes.ts
+    │   │   ├── product-history.routes.ts
+    │   │   ├── settings.routes.ts
+    │   │   ├── wishlist.routes.ts
+    │   │   └── payment.routes.ts
+    │   └── validations/
+    │       ├── lead.validation.ts
+    │       ├── product.validation.ts
+    │       ├── supplier.validation.ts
+    │       ├── order.validation.ts
+    │       ├── purchase.validation.ts
+    │       ├── campaign.validation.ts
+    │       ├── customer.validation.ts
+    │       └── settings.validation.ts
+    ├── core/
+    │   ├── container/
+    │   │   └── Container.ts
+    │   ├── domain/
+    │   │   ├── Product.ts
+    │   │   ├── ProductVariant.ts
+    │   │   ├── Lead.ts
+    │   │   ├── Order.ts
+    │   │   ├── OrderItem.ts
+    │   │   ├── Purchase.ts
+    │   │   ├── PurchaseItem.ts
+    │   │   ├── Wishlist.ts
+    │   │   ├── User.ts
+    │   │   ├── Supplier.ts
+    │   │   ├── Customer.ts
+    │   │   ├── Campaign.ts
+    │   │   ├── AuditLog.ts
+    │   │   ├── ProductHistory.ts
+    │   │   ├── Settings.ts
+    │   │   ├── UserProfile.ts
+    │   │   ├── Payment.ts
+    │   │   └── services/
+    │   │       ├── SkuService.ts
+    │   │       └── DiscountService.ts
+    │   ├── dto/
+    │   │   ├── AuthDTO.ts
+    │   │   ├── LeadDTO.ts
+    │   │   ├── ProductDTO.ts
+    │   │   ├── SupplierDTO.ts
+    │   │   ├── OrderDTO.ts
+    │   │   ├── PurchaseDTO.ts
+    │   │   ├── CampaignDTO.ts
+    │   │   ├── CustomerDTO.ts
+    │   │   ├── SettingsDTO.ts
+    │   │   ├── WishlistDTO.ts
+    │   │   └── PaymentDTO.ts
+    │   ├── errors/
+    │   │   ├── AppError.ts
+    │   │   └── CustomErrors.ts
+    │   └── interfaces/
+    │       ├── IProductRepository.ts
+    │       ├── IUserRepository.ts
+    │       ├── ISupplierRepository.ts
+    │       ├── ILeadRepository.ts
+    │       ├── IAuditRepository.ts
+    │       ├── IOrderRepository.ts
+    │       ├── IPurchaseRepository.ts
+    │       ├── ICampaignRepository.ts
+    │       ├── ICustomerRepository.ts
+    │       ├── ISettingsRepository.ts
+    │       ├── IWishlistRepository.ts
+    │       ├── IPaymentRepository.ts
+    │       ├── IProductSKU.ts
+    │       └── IAuthService.ts
+    ├── infrastructure/
+    │   ├── auth/AuthService.ts
+    │   ├── cache/cache.ts
+    │   ├── pix/PixService.ts
+    │   ├── database/
+    │   │   ├── mappers/
+    │   │   │   ├── ProductSchema.ts
+    │   │   │   ├── ProductVariantSchema.ts
+    │   │   │   ├── LeadSchema.ts
+    │   │   │   ├── SupplierSchema.ts
+    │   │   │   ├── UserSchema.ts
+    │   │   │   ├── OrderSchema.ts
+    │   │   │   ├── OrderItemSchema.ts
+    │   │   │   ├── PurchaseSchema.ts
+    │   │   │   ├── PurchaseItemSchema.ts
+    │   │   │   ├── CampaignSchema.ts
+    │   │   │   ├── CustomerSchema.ts
+    │   │   │   ├── SettingsSchema.ts
+    │   │   │   ├── WishlistSchema.ts
+    │   │   │   ├── VariantHistorySchema.ts
+    │   │   │   └── PaymentSchema.ts
+    │   │   ├── repositories/
+    │   │   │   ├── TypeORMProductRepository.ts
+    │   │   │   ├── TypeORMLeadRepository.ts
+    │   │   │   ├── TypeORMUserRepository.ts
+    │   │   │   ├── TypeORMSupplierRepository.ts
+    │   │   │   ├── TypeORMAuditRepository.ts
+    │   │   │   ├── TypeORMOrderRepository.ts
+    │   │   │   ├── TypeORMPurchaseRepository.ts
+    │   │   │   ├── TypeORMCampaignRepository.ts
+    │   │   │   ├── TypeORMCustomerRepository.ts
+    │   │   │   ├── TypeORMSettingsRepository.ts
+    │   │   │   ├── TypeORMWishlistRepository.ts
+    │   │   │   ├── TypeORMVariantHistoryRepository.ts
+    │   │   │   └── TypeORMPaymentRepository.ts
+    │   │   ├── subscribers/VariantAuditSubscriber.ts
+    │   │   ├── migrations/
+    │   │   ├── data-source.ts
+    │   │   └── server-init.ts
+    │   ├── logger/logger.ts
+    │   ├── swagger/swagger.ts
+    │   └── upload/upload.ts
+    ├── __tests__/
+    │   ├── unit/
+    │   │   ├── lead.test.ts
+    │   │   ├── order.test.ts
+    │   │   ├── purchase.test.ts
+    │   │   ├── wishlist.test.ts
+    │   │   ├── CreateLeadUseCase.test.ts
+    │   │   ├── CreateOrderUseCase.test.ts
+    │   │   ├── CreateCampaignUseCase.test.ts
+    │   │   ├── GetSettingsUseCase.test.ts
+    │   │   ├── ListCustomersUseCase.test.ts
+    │   │   ├── ReceiveInventoryUseCase.test.ts
+    │   │   ├── WishlistUseCases.test.ts
+    │   │   ├── GeneratePaymentQRCodeUseCase.test.ts
+    │   │   ├── AuthService.test.ts          ← pendente
+    │   │   ├── DiscountService.test.ts      ← pendente
+    │   │   └── controllers/
+    │   │       └── product.controller.test.ts
+    │   ├── integration/
+    │   │   ├── leads.test.ts
+    │   │   ├── orders.test.ts
+    │   │   ├── purchases.test.ts
+    │   │   ├── upload.test.ts
+    │   │   └── wishlist.test.ts
+    │   ├── performance.test.ts
+    │   └── setup.ts
+    └── server.ts
 ```
 
-### 2.2 Frontend (Jest + Testing Library + MSW)
+### 3.2 Frontend (`shop-varejo/`)
 
 ```
-shop-varejo/src/__tests__/
-├── contexts/
-│   └── AuthContext.test.tsx   # Contexto de autenticação
-├── hooks/
-│   └── useWishlist.test.ts    # Hook wishlist
-└── mocks/
-    ├── setupTests.ts          # Configuração Jest
-    ├── server.ts              # MSW server
-    └── handlers.ts            # Mock handlers API
+shop-varejo/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   └── layout.tsx
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts
+│   │   │   ├── logout/route.ts
+│   │   │   ├── me/route.ts
+│   │   │   └── refresh/route.ts
+│   │   ├── orders/route.ts
+│   │   └── products/[sku]/route.ts
+│   ├── produtos/
+│   │   ├── page.tsx
+│   │   ├── loading.tsx
+│   │   ├── error.tsx
+│   │   └── [sku]/page.tsx
+│   ├── wishlist/
+│   │   ├── page.tsx
+│   │   └── loading.tsx
+│   ├── checkout/
+│   │   ├── page.tsx
+│   │   ├── loading.tsx
+│   │   └── error.tsx
+│   ├── orders/
+│   │   ├── page.tsx
+│   │   └── [id]/page.tsx
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── src/
+│   ├── actions/
+│   │   ├── lead.actions.ts
+│   │   └── order.actions.ts
+│   ├── components/
+│   │   ├── features/ProductCard.tsx
+│   │   ├── ui/
+│   │   │   ├── ProductCardSkeleton.tsx
+│   │   │   └── ProductGridSkeleton.tsx
+│   │   ├── FeaturedSection.tsx
+│   │   ├── ProductGrid.tsx
+│   │   ├── ImageWithFallback.tsx
+│   │   ├── FloatingCart.tsx
+│   │   ├── CartDrawer.tsx
+│   │   ├── WishlistQuickModal.tsx
+│   │   ├── LeadInterestModal.tsx
+│   │   ├── FontSizeControls.tsx
+│   │   ├── SkipToContent.tsx
+│   │   ├── OrderStatusBadge.tsx
+│   │   ├── OrderStatusTimeline.tsx
+│   │   └── PixQRCodeDisplay.tsx
+│   ├── constants/
+│   │   └── site-config.ts       ← SITE_INFO, CATEGORIES, IMAGE_BASE_URL
+│   ├── contexts/
+│   │   ├── AuthContext.tsx
+│   │   ├── CartContext.tsx
+│   │   └── SettingsContext.tsx
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useWishlist.ts
+│   │   ├── useWishlistFlow.ts
+│   │   ├── useLeadModal.ts
+│   │   ├── useMagnifier.ts
+│   │   ├── useFontSize.ts
+│   │   └── usePixPayment.ts
+│   ├── lib/api/
+│   │   ├── client.ts
+│   │   ├── errors.ts
+│   │   └── services/
+│   │       ├── productService.ts
+│   │       ├── orderService.ts
+│   │       ├── authService.ts
+│   │       ├── leadService.ts
+│   │       ├── purchaseService.ts
+│   │       └── settingsService.ts
+│   ├── modules/
+│   │   ├── order-controller.ts
+│   │   ├── lead-controller.ts
+│   │   └── purchase-controller.ts
+│   ├── types/
+│   │   ├── api.types.ts
+│   │   ├── auth.types.ts
+│   │   ├── product.types.ts
+│   │   ├── order.types.ts
+│   │   ├── lead.types.ts
+│   │   ├── purchase.types.ts
+│   │   └── settings.types.ts
+│   └── __tests__/
+│       ├── contexts/AuthContext.test.tsx
+│       ├── hooks/useWishlist.test.ts
+│       └── mocks/
+│           ├── setupTests.ts
+│           ├── server.ts
+│           └── handlers.ts
+├── public/img/catalogo/          ← imagens webp dos produtos
+├── middleware.ts
+├── next.config.js
+├── tailwind.config.js
+├── babel.config.js
+└── .env.local
 ```
 
 ---
 
-## 3. Backend - Testes Implementados
+## 4. Banco de Dados
 
-### 3.1 Testes Unitários (Domínio)
+### 4.1 Colunas físicas — ATENÇÃO
 
-| Arquivo | Entidade | Cenários Testados |
-|---------|----------|-------------------|
-| `lead.test.ts` | Lead | Criação, status flow (NEW→CONTACTED→CONVERTED), validações |
-| `order.test.ts` | Order | State machine, cálculo desconto (0-5-10%), total, impostos |
-| `purchase.test.ts` | Purchase | Criação, recebimento inventário, validações |
-| `wishlist.test.ts` | Wishlist | Criação, userId, productId, relacionamentos |
+As tabelas `orders` e `order_items` usam **camelCase** diretamente no MySQL.
+O TypeORM **não deve usar** `name: 'snake_case'` nessas tabelas.
 
-### 3.2 Testes Unitários (Use Cases)
-
-| Arquivo | Use Case | Cenários Testados |
-|---------|----------|-------------------|
-| `CreateLeadUseCase.test.ts` | CreateLead + Wishlist | Criação com SKU opcional, integração Wishlist |
-| `CreateOrderUseCase.test.ts` | CreateOrder | Criação pedido, validação estoque, descontos |
-| `CreateCampaignUseCase.test.ts` | CreateCampaign | Criação campanha, validações datas |
-| `GetSettingsUseCase.test.ts` | GetSettings | Buscar configurações, fallback default |
-| `ListCustomersUseCase.test.ts` | ListCustomers | Paginação, filtros |
-| `ReceiveInventoryUseCase.test.ts` | ReceiveInventory | Receber mercadoria, atualizar estoque |
-| `WishlistUseCases.test.ts` | Wishlist (3 casos) | Add, Remove, Get wishlist, validações |
-
-### 3.3 Testes Unitários (Controllers)
-
-| Arquivo | Controller | Cenários Testados |
-|---------|------------|-------------------|
-| `product.controller.test.ts` | ProductController | CRUD, validações, respostas HTTP |
-
-### 3.4 Testes de Integração (API)
-
-| Arquivo | Endpoint | Cenários Testados |
-|---------|----------|-------------------|
-| `leads.test.ts` | `/api/leads` | GET, POST, PUT, DELETE, filtros, paginação |
-| `orders.test.ts` | `/api/orders` | Criação, status updates, descontos, auth |
-| `purchases.test.ts` | `/api/purchases` | Criação, recebimento, relatórios |
-| `upload.test.ts` | `/api/products/:sku/image` | Upload imagem, validação tipo, erros |
-| `wishlist.test.ts` | `/api/v1/wishlist` | POST, GET, DELETE, auth, validações |
-| `leads.test.ts` | `/api/v1/leads` | Criação SKU opcional (201), validação (400) |
-
-### 3.5 Testes de Performance
-
-| Arquivo | Cenário | Métrica |
-|---------|---------|---------|
-| `performance.test.ts` | Carga API | 100 req/s, latência < 200ms |
-
-**Total Backend:** 21 arquivos de teste, ~161+ (CreateLeadUseCase: 10/10 ✅, lead-wishlist-real: 2/2 ✅) testes individuais
-
----
-
-## 4. Frontend - Testes Implementados
-
-### 4.1 Contextos
-
-| Arquivo | Contexto | Cenários Testados |
-|---------|----------|-------------------|
-| `AuthContext.test.tsx` | AuthContext | Login, logout, persistência cookie, role check |
-
-### 4.2 Hooks
-
-| Arquivo | Hook | Cenários Testados |
-|---------|------|-------------------|
-| `useWishlist.test.ts` | useWishlist | Add/remove itens, persistência localStorage |
-
-### 4.3 Mocks (MSW)
-
-| Arquivo | Responsabilidade |
-|---------|------------------|
-| `handlers.ts` | Mock API endpoints (auth, products, orders) |
-| `server.ts` | Configuração MSW server |
-| `setupTests.ts` | Setup Jest + Testing Library |
-
-**Total Frontend:** 3 arquivos de teste, ~10+ testes individuais
-
----
-
-## 5. Cobertura de Testes
-
-### 5.1 Backend (Estimada)
-
-| Camada | Cobertura | Status |
-|--------|-----------|--------|
-| Domain Entities | 95% | ✅ Completo |
-| Use Cases | 90% | ✅ Maior parte |
-| Controllers | 75% | 🔄 Em progresso |
-| Middlewares | 60% | 🔄 Em progresso |
-| Infrastructure | 45% | ⚠️ Pendente |
-
-### 5.2 Frontend (Estimada)
-
-| Camada | Cobertura | Status |
-|--------|-----------|--------|
-| Contexts | 80% | ✅ Principal |
-| Hooks | 90% | ✅ Completo |
-| Components | 30% | ⚠️ Pendente |
-| Pages | 10% | ⚠️ Pendente |
-| Server Actions | 20% | ⚠️ Pendente |
-
----
-
-## 6. TDD na Prática
-
-### 6.1 Ciclo de Desenvolvimento
-
-```bash
-# 1. RED: Escrever teste que falha
-npm test -- --testNamePattern="deve criar lead"
-
-# 2. GREEN: Implementar código mínimo
-# (Implementar CreateLeadUseCase)
-
-# 3. REFACTOR: Melhorar código mantendo testes verdes
-npm test
+**orders:**
+```
+id, customerId, customerName, customerEmail, customerPhone,
+shippingAddress, subtotal, discount, total,
+status, paymentMethod, notes,
+createdAt, updatedAt, paymentConfirmedAt
 ```
 
-### 6.2 Exemplo: Lead Domain (TDD)
+**order_items:**
+```
+id, orderId, variantId, sku, productName,
+color, size, quantity, unitPrice, totalPrice, fulfillmentType
+```
 
-**Passo 1 - Teste (Red):**
+### 4.2 Regra geral de mapeamento
+- Sempre rodar `DESCRIBE tabela` antes de criar ou alterar um EntitySchema
+- Não assumir snake_case — verificar o nome físico real
+- `imageUrl` NÃO existe no banco — gerado dinamicamente no Use Case
+- Valores monetários: `int` (centavos) — nunca float
+
+### 4.3 Tabelas existentes
+```
+products, product_variants, leads, orders, order_items,
+purchases, purchase_items, users, settings, wishlists,
+campaigns, customers, variant_history, audit_logs, payments,
+financial_transactions
+```
+
+### 4.4 Variáveis de ambiente
+
+**Backend (`backend/.env`):**
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASS=senha
+DB_NAME=sisterslabdb
+JWT_SECRET=secret
+APP_URL=http://localhost:3001
+PIX_KEY=557187833065
+PIX_NAME=Sisters Lab
+PIX_CITY=SALVADOR
+PIX_HMAC_SECRET=secret
+```
+
+**Frontend (`shop-varejo/.env.local`):**
+```
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AUTH_SECRET=secret
+```
+
+---
+
+## 5. Entidades de Domínio
+
+### 5.1 Product
 ```typescript
-// lead.test.ts
-it('deve criar lead com status NEW', () => {
-  const lead = Lead.create({ name: 'Dalmo', email: 'dalmo@test.com' });
-  expect(lead.status).toBe(LeadStatus.NEW);
-});
+class Product {
+  id: number;
+  name: string;
+  brand?: string | null;
+  category: ProductCategory;
+  basePrice?: number | null;     // centavos
+  originalPrice?: number;        // centavos
+  badge?: ProductBadge;
+  specs?: Record<string, any>;
+  featured: boolean;
+  inStock: boolean;
+  imageName: string;             // filename: "produto-6.webp"
+  imageUrl?: string | null;      // gerado dinamicamente — NÃO existe no banco
+  variants: ProductVariant[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+// imageUrl gerado em Use Cases:
+// product.imageUrl = `${APP_URL}/img/catalogo/${product.imageName}`
 ```
 
-**Passo 2 - Implementação (Green):**
+### 5.2 Order
 ```typescript
-// Lead.ts
-static create(props: CreateLeadProps): Lead {
-  return new Lead({ ...props, status: LeadStatus.NEW });
+enum OrderStatus { PENDING, PAID, SHIPPED, DELIVERED, CANCELLED }
+enum PaymentMethod { PIX, CREDIT_CARD, BOLETO }
+
+class Order {
+  id: number;
+  customerId?: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress?: string;
+  subtotal: number;              // centavos
+  discount: number;              // centavos
+  total: number;                 // centavos — campo físico no banco
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  paymentConfirmedAt?: Date;
+  items: OrderItem[];
+  createdAt: Date;
+  updatedAt: Date;
+
+  calculateTotal(): number;      // retorna subtotal - discount
+  canTransitionTo(status): boolean;
+  // State machine:
+  // PENDING → PAID, CANCELLED
+  // PAID → SHIPPED, CANCELLED
+  // SHIPPED → DELIVERED
 }
 ```
 
-**Passo 3 - Refatoração (Refactor):**
+### 5.3 Payment (PIX)
 ```typescript
-// Adicionar validações, logs, etc.
+enum PaymentStatus { PENDING, CONFIRMED, EXPIRED, FAILED }
+
+class Payment {
+  id: number;
+  orderId: number;
+  amount: number;                // centavos
+  status: PaymentStatus;
+  pixPayload: string;            // BR Code EMV
+  pixQRCodeBase64: string;       // imagem base64
+  expiresAt: Date;               // 30 min após criação
+  confirmedAt?: Date;
+  createdAt: Date;
+}
+```
+
+### 5.4 FinancialTransaction (Ledger Contábil)
+```typescript
+enum TransactionType { INCOME, EXPENSE, FEE, REFUND }
+enum TransactionStatus { PENDING, SETTLED, CANCELLED }
+enum ReferenceType { ORDER, PURCHASE, OTHER }
+
+class FinancialTransaction {
+  id: number;
+  referenceId?: number;          // orderId ou purchaseId
+  referenceType?: ReferenceType;
+  type: TransactionType;
+  amount: number;                // centavos
+  status: TransactionStatus;
+  paymentMethod?: string;
+  provider?: string;             // Ex: 'INFINITEPAY'
+  expectedSettlementDate?: Date;
+  settledAt?: Date;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 ```
 
 ---
 
-## 7. Como Rodar os Testes
+## 6. Regras de Negócio
 
-### 7.1 Backend
+### 6.1 Estoque Híbrido
+| Tipo | Comportamento |
+|------|---------------|
+| IN_STOCK | Bloqueia se quantity > stock |
+| ON_DEMAND | **Nunca valida estoque** — permite sempre |
 
-```bash
-cd backend
-npm test                    # Todos os testes
-npm test -- --watch         # Watch mode
-npm test -- --coverage      # Com cobertura
-npm test -- lead.test.ts    # Teste específico
+### 6.2 Desconto Progressivo
+| Qtd itens | Desconto |
+|-----------|----------|
+| 0–4 | 0% |
+| 5–9 | 5% |
+| 10+ | 10% |
+
+### 6.3 PIX e Fluxo Financeiro (Ledger)
+| Etapa | Detalhe |
+|-------|---------|
+| Geração | `GET /api/v1/orders/:id/pix` — retorna BR Code EMV e expira em 30min |
+| Simulação (Dev) | `POST /api/v1/dev/simulate-payment` — bypass local sem webhook |
+| Confirmação Webhook | `POST /api/v1/webhooks/infinitepay` — validação via HMAC signature |
+| Ledger: INCOME | Gera `FinancialTransaction` automática (100% do total) com status `SETTLED` |
+| Ledger: FEE | Gera `FinancialTransaction` automática de `FEE` (ex: R$ 0,99 InfinitePay) |
+| Resultado | Order vai para `PAID`, registros contábeis criados, auditoria (AuditLog) salva. |
+
+### 6.4 Wishlist + Lead
+| Ação | Comportamento |
+|------|---------------|
+| Coração (não logado) | WishlistQuickModal → Lead PENDING → wishlist + carrinho |
+| Coração (logado) | Lead PENDING → wishlist + carrinho |
+| Remover coração | Remove wishlist + carrinho — Lead permanece |
+
+---
+
+## 7. Endpoints da API
+
+### Auth
+```
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/refresh
 ```
 
-### 7.2 Frontend
-
-```bash
-cd shop-varejo
-npm test                    # Todos os testes
-npm test -- --watch         # Watch mode
-npm test -- --coverage      # Com cobertura
+### Produtos
+```
+GET    /api/v1/products
+POST   /api/v1/products
+GET    /api/v1/products/:sku
+PUT    /api/v1/products/:sku
+DELETE /api/v1/products/:sku
+POST   /api/v1/products/:sku/image
+GET    /api/v1/products/:sku/history
+GET    /api/v1/history
 ```
 
-### 7.3 Todos (Raiz)
+### Pedidos
+```
+GET    /api/v1/orders
+POST   /api/v1/orders
+GET    /api/v1/orders/:id
+PATCH  /api/v1/orders/:id/status
+POST   /api/v1/orders/:id/cancel
+GET    /api/v1/orders/:id/pix           ← PIX MVP
+PATCH  /api/v1/orders/:id/confirm-payment ← admin only
+```
 
-```bash
-npm test                    # Backend + Frontend (se configurado)
+### Wishlist
+```
+GET    /api/v1/wishlist
+POST   /api/v1/wishlist
+DELETE /api/v1/wishlist/:id
+```
+
+### PIX / Pagamentos / Contabilidade
+```
+GET    /api/v1/orders/:id/pix
+PATCH  /api/v1/orders/:id/confirm-payment
+POST   /api/v1/dev/simulate-payment       ← (Apenas em ambiente DEV)
+POST   /api/v1/webhooks/infinitepay       ← (Webhook protegido por HMAC)
+```
+
+### ERP
+```
+GET/POST/PUT/DELETE /api/v1/campaigns
+GET/POST/PUT/DELETE /api/v1/customers
+GET/PATCH           /api/v1/settings
+GET/POST/DELETE     /api/v1/wishlist
+GET/POST            /api/v1/purchases
+POST                /api/v1/purchases/:id/receive
+GET/POST/PATCH/DELETE /api/v1/leads
 ```
 
 ---
 
-## 8. Pendências e Próximos Passos
+## 8. Testes Implementados
 
-### 8.1 Backend (Prioritários)
+### 8.1 Backend
 
-- [x] **Wishlist tests:** Domain, Use Cases, Integration (NOVO)
-- [ ] **AuthService tests:** Refresh token, logout, expired token
-- [ ] **ProductVariant tests:** Criação, validações, stock updates
-- [ ] **DiscountService tests:** Edge cases (valores limite)
-- [ ] **Middleware tests:** AuthMiddleware, RBAC, rate limiting
-- [ ] **Campaigns API tests:** Integração completa
-- [ ] **Customers API tests:** Integração completa
-- [ ] **Product History API tests:** Auditoria
-- [ ] **Paginação tests:** Orders, Purchases, Leads
+| Arquivo | Cenários | Status |
+|---------|----------|--------|
+| `performance.test.ts` | 9 carga/latência | ✅ |
+| `lead.test.ts` | 15 domínio Lead | ✅ |
+| `CreateLeadUseCase.test.ts` | 10 criação + wishlist | ✅ |
+| `product.controller.test.ts` | 6 CRUD HTTP | ✅ |
+| `leads.test.ts` (integration) | 8 API REST | ✅ |
+| `order.test.ts` | 26 state machine + desconto | ✅ |
+| `purchase.test.ts` | 14 domínio | ✅ |
+| `CreateOrderUseCase.test.ts` | 6 criação pedido | ✅ |
+| `ReceiveInventoryUseCase.test.ts` | 6 receber estoque | ✅ |
+| `orders.test.ts` (integration) | 8 API REST | ✅ |
+| `purchases.test.ts` (integration) | 6 API REST | ✅ |
+| `wishlist.test.ts` (domain) | domínio Wishlist | ✅ |
+| `WishlistUseCases.test.ts` | Add/Remove/Get | ✅ |
+| `wishlist.test.ts` (integration) | API REST | ✅ |
+| `GeneratePaymentQRCodeUseCase.test.ts` | PIX BRCode + CRC16 | ✅ |
+| `lead-wishlist-real.test.ts` | persistência real DB | ✅ |
+| `CreateCampaignUseCase.test.ts` | - | 🔄 Pendente |
+| `ListCustomersUseCase.test.ts` | - | 🔄 Pendente |
+| `GetSettingsUseCase.test.ts` | - | 🔄 Pendente |
+| `AuthService.test.ts` | refresh, logout, expirado | 🔄 Pendente |
+| `DiscountService.test.ts` | edge cases | 🔄 Pendente |
 
-### 8.2 Frontend (Prioritários)
+**Total backend: 163+ testes passando**
 
-- [ ] **Components tests:** ProductCard, ProductMagnifier, FloatingWhatsApp
-- [ ] **Pages tests:** Homepage, Login, Register, Wishlist
-- [ ] **Server Actions tests:** lead.actions.ts, order actions
-- [ ] **API Routes tests:** /api/auth/*, /api/orders
-- [ ] **CartContext tests:** Carrinho completo
-- [ ] **useFontSize tests:** Acessibilidade zoom
-- [ ] **E2E tests:** Cypress/Playwright (planejado)
+### 8.2 Frontend
 
-### 8.3 Infraestrutura
+| Arquivo | Cenários | Status |
+|---------|----------|--------|
+| `AuthContext.test.tsx` | login, logout, cookie, role | ✅ |
+| `useWishlist.test.ts` | add/remove, localStorage | ✅ |
+| MSW handlers | mock endpoints | ✅ |
+| `useFontSize.test.ts` | A+/A-, persistência | 🔄 Pendente |
+| CartContext tests | carrinho completo | 🔄 Pendente |
+| Components tests | ProductCard, Magnifier | 🔄 Pendente |
+| Pages tests | Homepage, Login, Wishlist | 🔄 Pendente |
 
-- [ ] **CI/CD:** GitHub Actions rodando testes automáticos
-- [ ] **Coverage reports:** Integração com Codecov
-- [ ] **Performance:** Testes regressão de performance
-- [ ] **A11Y tests:** jest-axe em componentes críticos
+**Total frontend: 10+ testes passando**
 
 ---
 
-## 9. Padrões e Convenções
+## 9. Status dos Módulos
 
-### 9.1 Nomenclatura
+### 9.1 Backend
+| Módulo | Status |
+|--------|--------|
+| Products CRUD + SKU | ✅ |
+| ProductVariant + FulfillmentType híbrido | ✅ |
+| VariantAuditSubscriber (shadow table) | ✅ |
+| Leads CRUD + status flow | ✅ |
+| Auth JWT (login, register, refresh) | ✅ |
+| Orders + state machine + DiscountService | ✅ |
+| Purchases + ReceiveInventory | ✅ |
+| Campaigns CRUD + paginação | ✅ |
+| Customers CRUD + paginação | ✅ |
+| Product History API | ✅ |
+| Settings API (chave-valor) | ✅ |
+| Wishlist API | ✅ |
+| Upload de imagem (Multer) | ✅ |
+| PIX InfinitePay + Webhook HMAC | ✅ |
+| Ledger Financeiro (FinancialTransactions) | ✅ |
+| Simulação DEV de Pagamentos | ✅ |
+| Paginação Orders/Purchases/Leads | 🔄 |
+| Auditoria lead confirmado | 🔄 |
 
-- **Unitários:** `*.test.ts` (ex: `lead.test.ts`)
-- **Integração:** `*.test.ts` em pasta `integration/`
-- **Performance:** `*.test.ts` com sufixo descritivo
-- **Frontend:** `*.test.tsx` para componentes React
+### 9.2 Frontend
+| Módulo | Status |
+|--------|--------|
+| Catálogo com imagens | ✅ |
+| CartContext + FloatingCart + CartDrawer | ✅ |
+| Wishlist (coração + modal) | ✅ |
+| useWishlistFlow (lead + wishlist + cart) | ✅ |
+| WhatsApp Integration | ✅ |
+| useFontSize + botões A+/A- | ✅ |
+| Product Magnifier | ✅ |
+| SettingsContext (dados via API) | ✅ |
+| AuthContext + login/register | ✅ |
+| Middleware proteção de rotas | ✅ |
+| PixQRCodeDisplay | ✅ |
+| Área admin (confirmar pagamento) | ✅ |
+| Skeleton loaders | 🔄 |
 
-### 9.2 Estrutura de Teste
+---
 
+## 10. Problemas Conhecidos
+
+| Problema | Causa | Status |
+|----------|-------|--------|
+| Limite de taxa InfinitePay em DEV | IPs dinâmicos podem não receber webhook | 🔄 Pendente (Usar ngrok) |
+
+### Resolvidos
+| Problema | Solução | Versão |
+|----------|---------|--------|
+| Ausência de Fluxo Contábil | Criada tabela financial_transactions gerada nos webhooks e manual. | 1.7.0 |
+| PIX não confirmava | Endpoint /dev/simulate-payment e /webhooks criados e ativos. | 1.6.5 |
+| QRCode exibe R$ 0,00 | Corrigido uso do `total` e conversões centavos. | 1.6.0 |
+| OrderSchema columns bug | Resolvido mapeamento camelCase/snake_case nativo do banco. | 1.6.0 |
+| No metadata for AuditLogModel | Fix no AppDataSource e injeção do schema. | 1.6.0 |
+| variant17 não encontrada | variantId enviado como string em vez de number | 1.5.1 |
+| imageUrl no ProductSchema | removido do schema — gerado dinamicamente | 1.4.1 |
+| UserSchema sem campo name | ALTER TABLE + mapeamento | 1.3.0 |
+| Login quebrado (productRepository) | userRepository corrigido em auth.routes.ts | 1.5.0 |
+
+---
+
+## 11. Ciclo TDD
+
+```bash
+# RED
+npm test -- --testNamePattern="deve criar pedido"
+
+# GREEN
+# implementar CreateOrderUseCase
+
+# REFACTOR
+npm test
+```
+
+### Estrutura padrão de teste
 ```typescript
 describe('Classe/Sistema', () => {
-  describe('método especifico', () => {
+  describe('método específico', () => {
     it('deve fazer algo esperado', () => {
       // Arrange
       // Act
@@ -290,53 +720,68 @@ describe('Classe/Sistema', () => {
 });
 ```
 
-### 9.3 Mocks e Stubs
+### Comandos
+```bash
+# Backend
+cd backend && npm test
+cd backend && npm test -- --coverage
+cd backend && npm test -- lead.test.ts
 
-- **Backend:** Repositories mockados via Container (DI)
-- **Frontend:** MSW para API, jest.mock para módulos
-
----
-
-## 10. Métricas de Qualidade
-
-| Métrica | Backend | Frontend | Meta |
-|---------|---------|----------|------|
-| Total Testes | 161+ (CreateLeadUseCase: 10/10 ✅, lead-wishlist-real: 2/2 ✅) | 10+ | - |
-| Cobertura (%) | ~82% | ~30% | >80% |
-| Testes/Arquivo | ~1.2 | ~0.25 | >0.8 |
-| Tempo Execução | <30s | <15s | <60s |
-
----
-
-## 11. Integração Contínua (Planejado)
-
-```yaml
-# .github/workflows/test.yml
-name: Tests
-on: [push, pull_request]
-jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - run: cd backend && npm test -- --coverage
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - run: cd shop-varejo && npm test -- --coverage
+# Frontend
+cd shop-varejo && npm test
+cd shop-varejo && npm test -- --coverage
 ```
 
 ---
 
-## 12. Referências
+## 12. Cobertura Estimada
 
-- [Jest Documentation](https://jestjs.io/)
-- [Testing Library](https://testing-library.com/)
-- [MSW Documentation](https://mswjs.io/)
-- [Supertest](https://github.com/visionmedia/supertest)
-- [TDD by Example - Kent Beck](https://www.amazon.com/Test-Driven-Development-Kent-Beck/dp/0321146530)
+| Camada | Backend | Frontend | Meta |
+|--------|---------|----------|------|
+| Domain Entities | 95% | — | >90% |
+| Use Cases | 90% | — | >85% |
+| Controllers | 75% | — | >70% |
+| Middlewares | 60% | — | >60% |
+| Infrastructure | 45% | — | >40% |
+| Contexts/Hooks | — | 80% | >80% |
+| Components | — | 30% | >60% |
+| Pages | — | 10% | >40% |
 
 ---
 
-**Última atualização:** 30/04/2026  
-**Próxima revisão:** Após conclusão Sprint 02  
-**Módulo Wishlist:** Implementado com 3 novos arquivos de teste (domain, use cases, integration)
+## 13. Próximos Passos
+
+### Sprint 02 (Concluída 🚀)
+- [x] Corrigir valor R$ 0,00 no QRCode PIX
+- [x] Implementar botão confirmar pagamento (admin)
+- [x] Rota DEV de simulação de pagamentos
+- [x] Criação de Fluxo de Caixa / Ledger Contábil (FinancialTransaction)
+- [x] Webhook da InfinitePay (automação HMAC)
+
+### Sprint 03 (Pendente)
+- [ ] AuthService.test.ts e DiscountService.test.ts
+- [ ] Paginação em Orders, Purchases e Leads
+- [ ] Skeleton loaders no frontend
+- [ ] Dashboard Financeiro / Gráficos de Contabilidade no Admin
+- [ ] CI/CD GitHub Actions
+- [ ] A11Y tests com jest-axe
+- [ ] E2E Cypress/Playwright
+- [ ] Build produção
+
+---
+
+## 14. Histórico de Versões
+
+| 1.7.0 | 2026-05-04 | Sincronização arquitetural TDD (Auditor). Fluxo de Ledger Financeiro implementado. Integração PIX Automática concluída. Bugfixes críticos TypeORM. |
+| 1.6.0 | 2026-05-04 | Merge TDD v1.5.0 + TDD separado. Wishlist módulo completo. PIX MVP em progresso. Correção mapeamento camelCase orders. 163+ testes. |
+| 1.5.0 | 2026-05-02 | Frontend completo: catálogo, cart, wishlist, auth, PIX tela. Login restaurado. |
+| 1.4.1 | 2026-04-29 | imageUrl dinâmica via APP_URL |
+| 1.4.0 | 2026-04-28 | ERP Medium: Campaigns, Customers, History, Settings |
+| 1.3.0 | 2026-04-27 | Security: UserSchema name, Seed Admin. Frontend-Bridge |
+| 1.2.0 | 2026-04-27 | Integração Frontend-Backend |
+| 1.1.0 | 2026-04-27 | Sales, Procurement, Catalog, QA |
+
+---
+
+**Autor: Dalmo Pereira / Agentes Antigravity**
+*Atualizado: 2026-05-04 | v1.7.0*

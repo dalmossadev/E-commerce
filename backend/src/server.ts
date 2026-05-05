@@ -8,6 +8,7 @@ import 'reflect-metadata';
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { initializaDatabase } from '@infrastructure/database/server-init';
 import { setupSwagger } from '@infrastructure/swagger/swagger';
 import { setupUploads } from '@infrastructure/upload/upload';
@@ -28,6 +29,11 @@ import { productHistoryRouter } from '@adapters/http/routes/product-history.rout
 import regionRouter from '@adapters/http/routes/region.routes';
 import { wishlistRouter } from '@adapters/http/routes/wishlist.routes';
 import { bannerRouter } from '@adapters/http/routes/banner.routes';
+import { paymentRouter } from '@adapters/http/routes/payment.routes';
+import { siteRouter } from '@adapters/http/routes/site.routes';
+import { webhookRouter } from '@adapters/http/routes/webhook.routes';
+import { devRoutes } from '@adapters/http/routes/dev.routes';
+import { financialRouter } from '@adapters/http/routes/financial.routes';
 
 const app = express();
 app.set('strict routing', false);
@@ -42,21 +48,32 @@ process.on('uncaughtException', (err) => {
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir localhost e endereços IP da rede local
-    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://192.168.')) {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://192.168.1.14:3000' // IP do Celular para teste
+    ];
+
+    if (!origin || allowedOrigins.includes(origin) || (isDev && origin.startsWith('http://192.168.'))) {
       callback(null, true);
     } else {
-      callback(null, true); // No ambiente de desenvolvimento, permitimos tudo para facilitar o acesso de dispositivos móveis
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
 }));
+
+// Webhooks must be parsed before express.json() to maintain raw buffers for HMAC validation
+app.use(`${API_BASE}/webhooks`, webhookRouter);
+
+app.use(cookieParser());
 app.use(express.json());
 app.use(requestLogger);
 app.use(defaultRateLimit);
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-app.use(`${API_BASE}/auth`, authRateLimit, authRouter);
+app.use(`${API_BASE}/auth`, authRouter);
 app.use(`${API_BASE}/products`, productRouter);
 app.use(`${API_BASE}/suppliers`, supplierRouter);
 app.use(`${API_BASE}/users`, userRouter);
@@ -71,7 +88,15 @@ app.use(`${API_BASE}/region`, regionRouter);
 app.use(`${API_BASE}/wishlist`, wishlistRouter);
 app.use(`${API_BASE}/admin`, adminRouter);
 app.use(`${API_BASE}/banners`, bannerRouter);
+app.use(`${API_BASE}/payments`, paymentRouter);
+app.use(`${API_BASE}/site`, siteRouter);
+app.use(`${API_BASE}/financial`, financialRouter);
 app.use('/api', healthRouter);
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(`${API_BASE}/dev`, devRoutes);
+  logger.warn('⚠️  ROTAS DE DESENVOLVIMENTO ATIVAS — desativar em produção');
+}
 
 app.use(errorHandler);
 

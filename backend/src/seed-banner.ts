@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { AppDataSource } from './infrastructure/database/data-source';
 import { TypeORMBannerRepository } from './infrastructure/database/repositories/TypeORMBannerRepository';
-import { Banner } from './domain/Banner';
+import { Banner } from '@core/domain/Banner';
 import { logger } from './infrastructure/logger/logger';
 
 async function seedBanners() {

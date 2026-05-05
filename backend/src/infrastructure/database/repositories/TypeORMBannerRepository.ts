@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "../data-source";
-import { IBannerRepository } from "../../../interfaces/IBannerRepository";
-import { Banner, BannerProps } from "../../../domain/Banner";
+import { IBannerRepository } from "../../../core/interfaces/IBannerRepository";
+import { Banner, BannerProps } from "@core/domain/Banner";
 import { BannerSchema } from "../../database/mappers/BannerSchema";
 import { logger } from "../../logger/logger";
 

@@ -1,8 +1,9 @@
-import { Order, OrderStatus } from '@core/domain/Order';
+import { Order, OrderStatus, PaymentMethod } from '@core/domain/Order';
 import { OrderItem } from '@core/domain/Order';
 import { IOrderRepository } from '@core/interfaces/IOrderRepository';
 import { IProductRepository } from '@core/interfaces/IProductRepository';
 import { DiscountService } from '@core/domain/services/DiscountService';
+import { IPaymentProvider } from '@core/interfaces/IPaymentProvider';
 import { CreateOrderDTO, CreateOrderItemDTO } from '@core/dto/OrderDTO';
 import { BadRequestError, NotFoundError } from '@core/errors/CustomErrors';
 import { ProductVariant, FulfillmentType } from '@core/domain/ProductVariant';
@@ -71,13 +72,14 @@ export class CreateOrderUseCase {
   constructor(
     private orderRepository: IOrderRepository,
     private productRepository?: IProductRepository,
-    private discountService?: DiscountService
+    private discountService?: DiscountService,
+    private paymentProvider?: IPaymentProvider
   ) {
     this.validator = new OrderValidator();
     this.factory = new OrderFactory();
   }
 
-  async execute(data: CreateOrderDTO, userId?: number, ip?: string, userAgent?: string): Promise<Order> {
+  async execute(data: CreateOrderDTO, userId?: number, ip?: string, userAgent?: string): Promise<any> {
     this.validator.validate(data);
     await this.validateStock(data.items!);
 
@@ -100,7 +102,36 @@ export class CreateOrderUseCase {
       });
     }
 
-    return await this.orderRepository.save(order);
+    const savedOrder = await this.orderRepository.save(order);
+
+    let qrCodePayload: string | undefined;
+    let qrCodeBase64: string | undefined;
+
+    if (this.paymentProvider && savedOrder.paymentMethod === PaymentMethod.PIX) {
+      try {
+        const charge = await this.paymentProvider.generateCharge(
+          savedOrder.id.toString(),
+          savedOrder.total,
+          `Pedido #${savedOrder.id} - Sisters Lab`
+        );
+        savedOrder.paymentProvider = 'infinitepay';
+        savedOrder.paymentExternalId = charge.externalId;
+        savedOrder.paymentStatus = 'PENDING';
+        savedOrder.paymentQrCode = charge.qrCodePayload; // Saving raw payload to DB
+        await this.orderRepository.update(savedOrder);
+        
+        qrCodePayload = charge.qrCodePayload;
+        qrCodeBase64 = charge.qrCodeBase64;
+      } catch (error) {
+        console.error('Failed to generate PIX charge during order creation:', error);
+      }
+    }
+
+    return {
+      ...savedOrder,
+      qrCodePayload,
+      qrCodeBase64
+    };
   }
 
   private async validateStock(items: CreateOrderItemDTO[]): Promise<void> {
@@ -109,10 +140,6 @@ export class CreateOrderUseCase {
     }
 
     for (const item of items) {
-      if (item.fulfillmentType !== FulfillmentType.IN_STOCK) {
-        continue;
-      }
-
       const variant = await this.productRepository.findVariantById(item.variantId);
       if (!variant) {
         throw new NotFoundError('ProductVariant', item.variantId);

@@ -10,6 +10,7 @@ export async function createLeadAction(formData: FormData) {
       customerPhone: formData.get('customerPhone') as string,
       customerEmail: formData.get('customerEmail') as string || undefined,
       productId: formData.get('productId') ? Number(formData.get('productId')) : undefined,
+      variantId: formData.get('variantId') ? Number(formData.get('variantId')) : undefined,
       notes: formData.get('notes') as string || undefined,
     };
 

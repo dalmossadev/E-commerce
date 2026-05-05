@@ -20,11 +20,20 @@ function saveWishlist(skus: string[]) {
 }
 
 export function useWishlist() {
-  const [wishlist, setWishlist] = useState<string[]>(loadWishlist);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    saveWishlist(wishlist);
-  }, [wishlist]);
+    const loaded = loadWishlist();
+    setWishlist(loaded);
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      saveWishlist(wishlist);
+    }
+  }, [wishlist, isInitialized]);
 
   const toggleWishlist = useCallback((sku: string) => {
     setWishlist(prev => {

@@ -1,20 +1,18 @@
-import { Request, Response } from "express";
-import { IBannerRepository } from "../../interfaces/IBannerRepository";
+// src/presentation/controllers/banner-controller.ts
+import { Request, Response, NextFunction } from "express";
 import { ListBannersUseCase } from "../../core/use-cases/banner/ListBannerUseCase";
+import { logger } from "../../infrastructure/logger/logger";
 
 export class BannerController {
-  private listBannersUseCase: ListBannersUseCase;
+  constructor(private listBannersUseCase: ListBannersUseCase) {}
 
-  constructor(bannerRepository: IBannerRepository) {
-    this.listBannersUseCase = new ListBannersUseCase(bannerRepository);
-  }
-
-  async handle(req: Request, res: Response): Promise<Response> {
+  async handle(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const banners = await this.listBannersUseCase.execute();
-      return res.json(banners.map(b => b.toJSON()));
+      res.json(banners.map(b => b.toJSON()));
     } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar banners" });
+      logger.error(`Erro ao buscar banners: ${error.message}`);
+      next(error);
     }
   }
 }

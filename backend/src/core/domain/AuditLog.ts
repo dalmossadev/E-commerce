@@ -10,14 +10,14 @@ export enum AuthEvent {
 
 export class AuditLog {
   public id!: number;
-  public userId?: number;    // Tornamos opcional para suportar LOGIN_FAILURE [cite: 13]
-  public action!: string;    // INSERT, UPDATE, DELETE ou LOGIN_SUCCESS... [cite: 13]
-  public entity!: string;    // Product, Settings ou Auth [cite: 9]
+  public userId?: number;    // Tornamos opcional para suportar LOGIN_FAILURE 
+  public action!: string;    // INSERT, UPDATE, DELETE ou LOGIN_SUCCESS... 
+  public entity!: string;    // Product, Settings ou Auth 
   public entityId?: string; 
   public oldValue?: string;  
   public newValue?: string;  
-  public ip?: string;        // Para detecção de força bruta [cite: 13]
-  public userAgent?: string; // Para rastreio de atividade legítima [cite: 13]
+  public ip?: string;        // Para detecção de força bruta 
+  public userAgent?: string; // Para rastreio de atividade legítima 
   public createdAt!: Date;
   public user?: User;
 

@@ -15,7 +15,7 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { ShoppingBag, AlertTriangle, ExternalLink, Info, Heart, MapPin, Clock } from 'lucide-react';
 import {
   getWhatsAppLink,
@@ -99,6 +99,9 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
 
   // Support props.product (API data)
   const product = propProduct;
+  const generatedId = useId();
+  // SKU from variants if not at top level. Fallback to ID-based string to ensure uniqueness in cart if SKU is missing.
+  const effectiveSku = product?.sku || (product as any)?.variants?.[0]?.sku || sku || `ID-${product?.id || generatedId.replace(/:/g, '')}`;
 
   const { handleHeartClick, isInWishlist, isModalOpen, closeModal, handleModalSuccess, currentProduct } = useWishlistFlow();
   const { user } = useAuth();
@@ -132,7 +135,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
   const discountPct   = originalPrice ? calcDiscount(originalPrice, basePrice) : null;
 
   const waLink = getWhatsAppLink(
-    `Olá! Tenho interesse no produto *${name}* (SKU: ${sku || 'N/A'}). Pode me ajudar?`,
+    `Olá! Tenho interesse no produto *${name}* (SKU: ${effectiveSku || 'N/A'}). Pode me ajudar?`,
     { number: settings.whatsapp_number, message: settings.whatsapp_message }
   );
 
@@ -140,7 +143,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'click', {
         event_category: 'WhatsApp',
-        event_label: `Product: ${name} (${sku})`,
+        event_label: `Product: ${name} (${effectiveSku})`,
         value: basePrice,
       });
     }
@@ -209,23 +212,23 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    const skuValue = product?.sku || '';
                     if (product?.id && product?.name) {
                       handleHeartClick({ 
                         id: product.id, 
                         name: product.name, 
-                        sku: skuValue,
+                        sku: effectiveSku,
                         price: basePrice,
-                        imageName: imageName
+                        imageName: imageName,
+                        variants: (product as any).variants
                       });
                     }
                   }}
                   className="p-2 bg-black/80 backdrop-blur-sm hover:bg-brand-primary/20 transition-colors"
-                  aria-label={isInWishlist(product?.sku || '') ? 'Remover da wishlist' : 'Adicionar à wishlist'}
+                  aria-label={isInWishlist(effectiveSku) ? 'Remover da wishlist' : 'Adicionar à wishlist'}
                 >
                   <Heart
                     size={16}
-                    className={isInWishlist(product?.sku || '') ? 'fill-[#00FF00] text-[#00FF00]' : 'text-white'}
+                    className={isInWishlist(effectiveSku) ? 'fill-[#00FF00] text-[#00FF00]' : 'text-white'}
                   />
                 </button>
           </div>
@@ -256,7 +259,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
 
         {/* SKU */}
         <p className="font-mono text-[10px] text-brand-muted/50 tracking-widest uppercase">
-          {sku}
+          {effectiveSku}
         </p>
 
         {/* Nome */}
@@ -295,7 +298,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
               className="flex items-center gap-1.5 text-[10px] text-brand-muted
                          hover:text-brand-primary transition-colors font-mono uppercase tracking-wider"
               aria-expanded={showSpecs}
-              aria-controls={`specs-${sku}`}
+              aria-controls={`specs-${effectiveSku}`}
             >
               <Info size={10} aria-hidden="true" />
               {showSpecs ? 'Ocultar' : 'Specs'}
@@ -303,7 +306,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
 
             {showSpecs && (
                  <div
-                 id={`specs-${sku}`}
+                 id={`specs-${effectiveSku}`}
                  className="mt-2 p-2 bg-brand-background/60
                             border border-brand-border"
                >
@@ -343,8 +346,9 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
         {currentProduct && (
           <WishlistQuickModal
             productName={currentProduct.name || ''}
-            sku={currentProduct.sku || ''}
+            sku={effectiveSku}
             productId={currentProduct.id}
+            variantId={currentProduct.variants?.[0]?.id}
             isOpen={isModalOpen}
             onClose={closeModal}
             onSuccess={handleModalSuccess}

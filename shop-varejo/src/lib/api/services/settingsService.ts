@@ -5,20 +5,27 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/settings`, {
-      cache: 'force-cache',
-      next: { revalidate: 3600 } // Revalidate every hour
+    const response = await fetch(`${API_BASE_URL}/api/v1/site/info`, {
+      cache: 'no-store', // Always get latest for now
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch settings');
+      throw new Error('Failed to fetch site info');
     }
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching site settings, using fallback:', error);
+    const data = await response.json();
     
-    // Fallback to SITE_INFO if API is unavailable
+    return {
+      site_name: data.name,
+      site_tagline: data.tagline,
+      site_description: data.description,
+      whatsapp_number: data.whatsappNumber,
+      whatsapp_message: data.whatsappMessage,
+      instagram_url: data.instagramUrl,
+    };
+  } catch (error) {
+    console.error('Error fetching site info, using fallback:', error);
+    
     return {
       site_name: SITE_INFO.name,
       site_tagline: SITE_INFO.tagline,

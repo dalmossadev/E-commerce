@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { CreateOrderUseCase, UpdateOrderStatusUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderByIdUseCase } from '@core/use-cases/orders/OrderUseCases';
+import { ConfirmPaymentUseCase } from '@core/use-cases/orders/ConfirmPaymentUseCase';
+import { GetOrderPixUseCase } from '@core/use-cases/orders/GetOrderPixUseCase';
 import { CreateOrderDTO, UpdateOrderStatusDTO } from '@core/dto/OrderDTO';
 import { OrderStatus, PaymentMethod } from '@core/domain/Order';
 import { DiscountService } from '@core/domain/services/DiscountService';
@@ -20,6 +22,8 @@ export class OrderController {
   private cancelOrderUseCase: CancelOrderUseCase;
   private listOrdersUseCase: ListOrdersUseCase;
   private getOrderByIdUseCase: GetOrderByIdUseCase;
+  private confirmPaymentUseCase: ConfirmPaymentUseCase;
+  private getOrderPixUseCase: GetOrderPixUseCase;
   private discountService?: DiscountService;
 
   constructor() {
@@ -28,6 +32,8 @@ export class OrderController {
     this.cancelOrderUseCase = container.cancelOrderUseCase();
     this.listOrdersUseCase = container.listOrdersUseCase();
     this.getOrderByIdUseCase = container.getOrderByIdUseCase();
+    this.confirmPaymentUseCase = container.confirmPaymentUseCase();
+    this.getOrderPixUseCase = container.getOrderPixUseCase();
   }
 
   private getDiscountService(): DiscountService {
@@ -50,7 +56,7 @@ export class OrderController {
             throw new BadRequestError(`Variant ${item.variantId} not found`);
           }
 
-          if (item.fulfillmentType === FulfillmentType.IN_STOCK && variant.stock < item.quantity) {
+          if (variant.fulfillmentType === FulfillmentType.IN_STOCK && variant.stock < item.quantity) {
             throw new BadRequestError(`Insufficient stock for SKU ${item.sku}. Available: ${variant.stock}`);
           }
 
@@ -208,6 +214,43 @@ export class OrderController {
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPix(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseId(req.params.id);
+      if (id === null) {
+        res.status(400).json({ message: 'Invalid order ID' });
+        return;
+      }
+
+      const result = await this.getOrderPixUseCase.execute(id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async confirmPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = parseId(req.params.id);
+      if (id === null) {
+        res.status(400).json({ message: 'Invalid order ID' });
+        return;
+      }
+
+      const user = (req as any).user;
+      
+      const order = await this.confirmPaymentUseCase.execute(
+        id, 
+        user?.id, 
+        req.ip, 
+        req.get('user-agent')
+      );
+      res.json(order);
     } catch (error) {
       next(error);
     }

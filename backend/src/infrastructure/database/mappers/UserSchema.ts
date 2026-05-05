@@ -12,6 +12,7 @@ export const UserSchema = new EntitySchema<User>({
     password: { type: "varchar", length: 255 },
     name: { type: "varchar", length: 255, nullable: true },
     role: { type: "enum", enum: ["admin", "editor", "customer"], default: "customer" },
+    refreshToken: { type: "varchar", length: 255, nullable: true },
     createdAt: { type: "timestamp", createDate: true },
     updatedAt: { type: "timestamp", updateDate: true },
   },

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useSettings } from '@/contexts/SettingsContext'; // SettingsContext.tsx — useSettings() exportado corretamente
 import { Button } from '@/components/ui/Button';
-import { ShoppingCart, CreditCard, Truck, Check } from 'lucide-react';
+import { ShoppingCart, CreditCard } from 'lucide-react';
+import { PixQRCodeDisplay } from '@/components/PixQRCodeDisplay';
 
 type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'BOLETO';
 
@@ -20,6 +22,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { items, subtotal, totalItems, clearCart } = useCart();
+  const settings = useSettings();
 
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [customerEmail, setCustomerEmail] = useState(user?.email || '');
@@ -27,7 +30,14 @@ export default function CheckoutPage() {
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [error, setError] = useState('');
+  const [pixData, setPixData] = useState<{ qrCode: string; payload: string } | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const handlePixPaid = () => {
+    clearCart();
+    router.push(`/orders?success=true&orderId=${createdOrderId}`);
+  };
 
   if (isLoading) {
     return (
@@ -42,7 +52,7 @@ export default function CheckoutPage() {
     return null;
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !pixData) {
     router.push('/');
     return null;
   }
@@ -60,43 +70,124 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/orders', {
+      // CORREÇÃO 2+5: Normalizar campos opcionais do CartItem para satisfazer o schema do backend
+      // CartItem usa `price` como campo primário e `unitPrice` como alias opcional
+      // CartItem usa `name` como campo primário e `productName` como alias opcional
+      // variantId e fulfillmentType são opcionais no CartItem mas obrigatórios no backend
+      const orderPayload = {
+        customerId: user?.id,
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress: shippingAddress || undefined,
+        items: items.map(item => ({
+          variantId: Number(item.variantId ?? item.id),        // Garantir que é number
+          sku: item.sku,
+          productName: item.productName ?? item.name,          // fallback para name
+          color: item.color,
+          size: item.size,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice ?? item.price,             // fallback para price
+          fulfillmentType: item.fulfillmentType ?? 'IN_STOCK', // fallback: enum FulfillmentType
+        })),
+        paymentMethod,
+      };
+
+      // Log diagnóstico — remover após validação
+      console.log('[checkout] POST /api/orders payload:', JSON.stringify(orderPayload, null, 2));
+
+      const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerId: user?.id,
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress: shippingAddress || undefined,
-          items: items.map(item => ({
-            variantId: item.variantId,
-            sku: item.sku,
-            productName: item.productName,
-            color: item.color,
-            size: item.size,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            fulfillmentType: item.fulfillmentType,
-          })),
-          paymentMethod,
-        }),
+        body: JSON.stringify(orderPayload),
       });
 
-      const data = await response.json();
+      const orderData = await orderResponse.json();
+      console.log('[checkout] POST /api/orders response:', orderResponse.status, orderData);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao finalizar pedido');
+      if (!orderResponse.ok) {
+        if (orderData.status === 'validation_error' && orderData.errors) {
+          const firstError = orderData.errors[0];
+          throw new Error(`Erro: ${firstError.message}`);
+        }
+        throw new Error(orderData.message || orderData.error || 'Erro ao finalizar pedido');
+      }
+
+      setCreatedOrderId(orderData.id);
+
+      if (paymentMethod === 'PIX') {
+        if (orderData.qrCodePayload && orderData.qrCodeBase64) {
+          setPixData({
+            qrCode: orderData.qrCodeBase64,
+            payload: orderData.qrCodePayload
+          });
+          // Do NOT clear cart yet. Let the polling do it on PAID.
+          return;
+        } else {
+          // Fallback just in case backend didn't return it but it was generated
+          setIsGeneratingPix(true);
+          try {
+            const pixResponse = await fetch(`/api/orders/${orderData.id}/pix`);
+            const pixDataResponse = await pixResponse.json();
+            
+            if (pixResponse.ok && (pixDataResponse.qrCode || pixDataResponse.qrCodeBase64)) {
+              setPixData({
+                qrCode: pixDataResponse.qrCode || pixDataResponse.qrCodeBase64,
+                payload: pixDataResponse.payload || ''
+              });
+              return;
+            } else {
+              throw new Error(pixDataResponse.error || 'Falha ao gerar QR Code do PIX');
+            }
+          } finally {
+            setIsGeneratingPix(false);
+          }
+        }
       }
 
       clearCart();
-      router.push(`/orders?success=true&orderId=${data.id}`);
+      router.push(`/orders?success=true&orderId=${orderData.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao finalizar pedido');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isGeneratingPix) {
+    return (
+      <div className="container-app py-20">
+        <div className="max-w-md mx-auto bg-brand-surface border border-brand-border p-8 text-center">
+          <div className="mb-6 flex justify-center">
+             <div className="w-16 h-16 bg-[#F5F5F5] animate-pulse rounded-full" />
+          </div>
+          <div className="h-8 bg-[#F5F5F5] animate-pulse w-3/4 mx-auto mb-2" />
+          <div className="h-4 bg-[#F5F5F5] animate-pulse w-full mx-auto mb-8" />
+          
+          <div className="bg-[#F5F5F5] p-4 inline-block mb-2 border-4 border-[#F5F5F5] animate-pulse">
+            <div className="w-64 h-64 bg-[#E0E0E0]" />
+          </div>
+          
+          <div className="space-y-4 mt-6">
+             <div className="h-12 bg-[#F5F5F5] animate-pulse w-full" />
+             <div className="h-12 bg-[#F5F5F5] animate-pulse w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (pixData && createdOrderId) {
+    return (
+      <PixQRCodeDisplay
+        orderId={createdOrderId}
+        qrCodeBase64={pixData.qrCode}
+        qrCodePayload={pixData.payload}
+        total={total}
+        onPaid={handlePixPaid}
+      />
+    );
+  }
 
   return (
     <div className="container-app py-10">
@@ -227,11 +318,11 @@ export default function CheckoutPage() {
                 {items.map(item => (
                   <div key={item.sku} className="flex justify-between text-sm">
                     <span className="text-brand-muted">
-                      {item.quantity}x {item.productName}
+                      {item.quantity}x {item.productName ?? item.name}
                       {item.color && ` (${item.color})`}
                     </span>
                     <span className="text-brand-text">
-                      R$ {((item.unitPrice * item.quantity) / 100).toFixed(2).replace('.', ',')}
+                      R$ {(((item.unitPrice ?? item.price) * item.quantity) / 100).toFixed(2).replace('.', ',')}
                     </span>
                   </div>
                 ))}

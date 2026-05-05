@@ -9,6 +9,11 @@ import { CartDrawer } from './CartDrawer';
 export function FloatingCart() {
   const { totalItems } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -24,7 +29,7 @@ export function FloatingCart() {
       >
         <ShoppingBag className="w-6 h-6 text-brand-primary transition-colors" />
         
-        {totalItems > 0 && (
+        {mounted && totalItems > 0 && (
           <span 
             className={cn(
               "absolute -top-1 -right-1 flex items-center justify-center",
