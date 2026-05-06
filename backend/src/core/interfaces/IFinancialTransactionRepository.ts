@@ -16,4 +16,11 @@ export interface IFinancialTransactionRepository {
     fees: number;
     net: number;
   }>;
+
+  getAggregatedStats(startDate: Date, endDate: Date, interval: 'day' | 'week' | 'month' | 'year'): Promise<Array<{
+    period: string;
+    income: number;
+    expense: number;
+    net: number;
+  }>>;
 }

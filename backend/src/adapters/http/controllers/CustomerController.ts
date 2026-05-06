@@ -1,95 +1,69 @@
-import { Request, Response, NextFunction } from 'express';
-import { CreateCustomerUseCase, ListCustomersUseCase, GetCustomerByIdUseCase, UpdateCustomerUseCase, DeleteCustomerUseCase } from '@core/use-cases/customers/CustomerUseCases';
-import { CreateCustomerDTO, UpdateCustomerDTO, CustomerQueryDTO } from '@core/dto/CustomerDTO';
-import { container } from '@core/container/Container';
-import { createCustomerSchema, updateCustomerSchema } from '../validations/customer.validation';
-
-const parseId = (param: string | string[]): number | null => {
-  const id = parseInt(Array.isArray(param) ? param[0] : param, 10);
-  return isNaN(id) ? null : id;
-};
+import { Request, Response } from 'express';
+import { CreateCustomerUseCase } from '@core/use-cases/customers/CreateCustomerUseCase';
+import { ListCustomersUseCase } from '@core/use-cases/customers/ListCustomersUseCase';
+import { GetCustomerByIdUseCase } from '@core/use-cases/customers/GetCustomerByIdUseCase';
+import { UpdateCustomerUseCase } from '@core/use-cases/customers/UpdateCustomerUseCase';
+import { DeleteCustomerUseCase } from '@core/use-cases/customers/DeleteCustomerUseCase';
+import { CustomerQueryDTO } from '@core/dto/CustomerDTO';
 
 export class CustomerController {
-  private createCustomerUseCase: CreateCustomerUseCase;
-  private listCustomersUseCase: ListCustomersUseCase;
-  private getCustomerByIdUseCase: GetCustomerByIdUseCase;
-  private updateCustomerUseCase: UpdateCustomerUseCase;
-  private deleteCustomerUseCase: DeleteCustomerUseCase;
+  constructor(
+    private createCustomerUseCase: CreateCustomerUseCase,
+    private listCustomersUseCase: ListCustomersUseCase,
+    private getCustomerByIdUseCase: GetCustomerByIdUseCase,
+    private updateCustomerUseCase: UpdateCustomerUseCase,
+    private deleteCustomerUseCase: DeleteCustomerUseCase
+  ) {}
 
-  constructor() {
-    this.createCustomerUseCase = container.createCustomerUseCase();
-    this.listCustomersUseCase = container.listCustomersUseCase();
-    this.getCustomerByIdUseCase = container.getCustomerByIdUseCase();
-    this.updateCustomerUseCase = container.updateCustomerUseCase();
-    this.deleteCustomerUseCase = container.deleteCustomerUseCase();
-  }
-
-  async create(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async create(req: Request, res: Response) {
     try {
-      const data = createCustomerSchema.parse(req.body) as CreateCustomerDTO;
-      const customer = await this.createCustomerUseCase.execute(data);
+      const customer = await this.createCustomerUseCase.execute(req.body);
       res.status(201).json(customer);
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async list(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async list(req: Request, res: Response) {
     try {
       const query: CustomerQueryDTO = {
-        page: req.query.page ? parseInt(req.query.page as string) : 1,
-        limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+        page: req.query.page ? Number(req.query.page) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
         search: req.query.search as string,
-        sortBy: req.query.sortBy as any || 'createdAt',
-        sortOrder: req.query.sortOrder as 'ASC' | 'DESC' || 'DESC'
+        sortBy: req.query.sortBy as any,
+        sortOrder: req.query.sortOrder as 'ASC' | 'DESC'
       };
       const result = await this.listCustomersUseCase.execute(query);
       res.json(result);
     } catch (error) {
-      next(error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getById(req: Request, res: Response) {
     try {
-      const id = parseId(req.params.id);
-      if (id === null) {
-        res.status(400).json({ message: 'Invalid customer ID' });
-        return;
-      }
-      const customer = await this.getCustomerByIdUseCase.execute(id);
+      const customer = await this.getCustomerByIdUseCase.execute(Number(req.params.id));
       res.json(customer);
     } catch (error) {
-      next(error);
+      res.status(404).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async update(req: Request, res: Response) {
     try {
-      const id = parseId(req.params.id);
-      if (id === null) {
-        res.status(400).json({ message: 'Invalid customer ID' });
-        return;
-      }
-      const data = updateCustomerSchema.parse(req.body) as UpdateCustomerDTO;
-      const customer = await this.updateCustomerUseCase.execute(id, data);
+      const customer = await this.updateCustomerUseCase.execute(Number(req.params.id), req.body);
       res.json(customer);
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async delete(req: Request, res: Response) {
     try {
-      const id = parseId(req.params.id);
-      if (id === null) {
-        res.status(400).json({ message: 'Invalid customer ID' });
-        return;
-      }
-      await this.deleteCustomerUseCase.execute(id);
+      await this.deleteCustomerUseCase.execute(Number(req.params.id));
       res.status(204).send();
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 }

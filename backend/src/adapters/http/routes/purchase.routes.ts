@@ -1,13 +1,10 @@
 import { Router } from 'express';
-import { PurchaseController } from '../controllers/PurchaseController';
+import { container } from '@core/container/Container';
 import { validate } from '../middlewares/ValidationMiddleware';
 import { createPurchaseSchema, updatePurchaseSchema, receiveInventorySchema } from '../validations/purchase.validation';
 
-export { PurchaseController };
-
 const purchaseRouter = Router();
-
-const purchaseController = new PurchaseController();
+const purchaseController = container.getPurchaseController();
 
 purchaseRouter.post('/', validate(createPurchaseSchema), (req, res, next) => purchaseController.create(req, res, next));
 purchaseRouter.get('/', (req, res, next) => purchaseController.list(req, res, next));

@@ -10,6 +10,26 @@ export const CustomerSchema = new EntitySchema<Customer>({
     fullName: { type: "varchar", length: 255 },
     cpf: { type: "varchar", length: 14, unique: true },
     phone: { type: "varchar", length: 20 },
-    address: { type: "json", nullable: true }
+    createdAt: { 
+      type: "timestamp", 
+      precision: 0,
+      createDate: true, 
+      default: () => "CURRENT_TIMESTAMP" 
+    },
+    updatedAt: { 
+      type: "timestamp", 
+      precision: 0,
+      updateDate: true, 
+      default: () => "CURRENT_TIMESTAMP",
+      onUpdate: "CURRENT_TIMESTAMP"
+    },
   },
+  relations: {
+    addresses: {
+      type: "one-to-many",
+      target: "Address",
+      inverseSide: "customer",
+      cascade: true
+    }
+  }
 });

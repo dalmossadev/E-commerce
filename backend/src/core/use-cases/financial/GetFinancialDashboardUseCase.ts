@@ -7,6 +7,12 @@ export interface FinancialDashboardResult {
     fees: number;
     net: number;
   };
+  charts: {
+    daily: any[];
+    weekly: any[];
+    monthly: any[];
+    yearly: any[];
+  };
   recentTransactions: any[];
 }
 
@@ -16,22 +22,36 @@ export class GetFinancialDashboardUseCase {
   ) {}
 
   async execute(): Promise<FinancialDashboardResult> {
-    // Calculando saldo dos últimos 30 dias (ou de todo o tempo para MVP)
-    // Para MVP vamos pegar de todo o tempo (podemos setar a data inicial para bem atrás)
-    const startDate = new Date('2020-01-01');
-    const endDate = new Date();
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sixMonthsAgo = new Date(now);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const oneYearAgo = new Date(now);
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    // Saldo Geral
+    const balance = await this.financialRepository.calculateBalanceByPeriod(new Date('2020-01-01'), now);
     
-    const balance = await this.financialRepository.calculateBalanceByPeriod(startDate, endDate);
+    // Stats para Gráficos
+    const daily = await this.financialRepository.getAggregatedStats(thirtyDaysAgo, now, 'day');
+    const monthly = await this.financialRepository.getAggregatedStats(oneYearAgo, now, 'month');
     
-    // Podemos também retornar as últimas 10 transações
-    // O TypeORMRepository ainda não tem um 'findRecent', mas podemos pegar via query ou todos
-    // Como é MVP, vamos trazer todos e ordenar pelo JS por enquanto, ou apenas retornar o consolidado.
-    // O IFinancialTransactionRepository atual não tem paginação de transações, 
-    // mas pra dashboard inicial, o balance já atende a tríade.
-    
+    // Para simplificar o MVP, vamos derivar semanal e anual ou buscar também
+    const weekly = await this.financialRepository.getAggregatedStats(new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000), now, 'week');
+    const yearly = await this.financialRepository.getAggregatedStats(new Date('2020-01-01'), now, 'year');
+
     return {
       currentBalance: balance,
-      recentTransactions: [] // placeholder para uma lista de transações se houver futuro
+      charts: {
+        daily,
+        weekly,
+        monthly,
+        yearly
+      },
+      recentTransactions: [] 
     };
   }
 }

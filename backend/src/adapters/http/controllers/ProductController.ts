@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { ListProductsUseCase } from '@core/use-cases/ListProductsUseCase';
-import { GetProductBySkuUseCase } from '@core/use-cases/GetProductBySkuUseCase';
-import { CreateProductUseCase } from '@core/use-cases/CreateProductUseCase';
+import { ListProductsUseCase } from '@core/use-cases/catalog/ListProductsUseCase';
+import { GetProductBySkuUseCase } from '@core/use-cases/catalog/GetProductBySkuUseCase';
+import { CreateProductUseCase } from '@core/use-cases/catalog/CreateProductUseCase';
 import { UpdateProductInput } from '@core/use-cases/catalog/UpdateProductUseCase';
 import { UpdateProductUseCase } from '@core/use-cases/catalog/UpdateProductUseCase';
 import { DeleteProductUseCase } from '@core/use-cases/catalog/DeleteProductUseCase';
@@ -13,9 +13,19 @@ import { ProductQueryOptions } from '@core/interfaces/IProductRepository';
 function mapProductToDTO(product: any): ProductResponseDTO {
   return {
     id: product.id,
+    sku: product.variants?.[0]?.sku,
     name: product.name,
     brand: product.brand,
-    category: product.category,
+    categoryId: product.categoryId,
+    category: product.category ? {
+      id: product.category.id,
+      name: product.category.name,
+      slug: product.category.slug,
+      type: product.category.type,
+      parentId: product.category.parentId,
+      createdAt: product.category.createdAt,
+      updatedAt: product.category.updatedAt
+    } : undefined,
     basePrice: product.basePrice,
     description: product.description,
     originalPrice: product.originalPrice,
@@ -54,7 +64,8 @@ export class ProductController {
       const queryOptions: ProductQueryOptions = {
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
-        category: req.query.category as any,
+        categoryId: req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined,
+        categorySlug: req.query.category as string,
         featured: req.query.featured === 'true' ? true : req.query.featured === 'false' ? false : undefined,
         search: req.query.search as string,
         minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
@@ -62,6 +73,8 @@ export class ProductController {
         sortBy: req.query.sortBy as any || 'createdAt',
         sortOrder: req.query.sortOrder as 'ASC' | 'DESC' || 'DESC'
       };
+
+      console.log('Product query options:', queryOptions);
 
       const result = await this.listProductsUseCase.execute(queryOptions);
       res.json({

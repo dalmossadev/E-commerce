@@ -77,15 +77,16 @@ export class ProductManager {
 const productManager = new ProductManager();
 productManager.update('12345', { price: 99.99, name: 'Produto Atualizado' });
 
-// Exemlo de uso do ProductManager para criar um novo produto
+// Exemplo de uso do ProductManager para criar um novo produto
 productManager.create({
+  id: 0,
   sku: '12345',
   name: 'Novo Produto',
   description: 'Descrição do novo produto',
   price: 199.99,
   imageName: 'produto.jpg',
   altText: 'Imagem do produto',
-  category: 'eletronicos',
+  categoryId: 1, // ID da categoria
   badge: 'novo',
   inStock: true,
   featured: false,

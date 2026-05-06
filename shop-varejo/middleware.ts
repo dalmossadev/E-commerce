@@ -49,6 +49,24 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
+
+    // Role-based authorization for admin routes
+    if (pathname.startsWith('/admin')) {
+      try {
+        const payloadBase64 = sessionToken.split('.')[1];
+        // atob is available in Edge Runtime
+        const decoded = atob(payloadBase64);
+        const payload = JSON.parse(decoded);
+        
+        if (payload.role !== 'admin') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      } catch (e) {
+        // Fallback or error decoding JWT -> Unauthorized
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
+
     return NextResponse.next();
   }
 

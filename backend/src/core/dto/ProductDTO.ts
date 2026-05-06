@@ -1,9 +1,10 @@
-import { ProductBadge, ProductCategory } from '@core/domain/Product';
+import { ProductBadge } from '@core/domain/Product';
+import { CategoryResponseDTO } from './CategoryDTO';
 
 export interface CreateProductDTO {
   name: string;
   brand: string;
-  category: ProductCategory;
+  categoryId: number;
   basePrice: number;
   attributes: {
     colors: string[];
@@ -19,9 +20,11 @@ export interface CreateProductDTO {
 
 export interface ProductResponseDTO {
   id: number;
+  sku?: string;
   name: string;
   brand?: string | null;
-  category: ProductCategory;
+  categoryId: number;
+  category?: CategoryResponseDTO;
   basePrice?: number | null;
   description?: string;
   originalPrice?: number | null;
@@ -49,7 +52,7 @@ export interface ProductVariantDTO {
 export interface ListProductsQueryDTO {
   page?: number;
   limit?: number;
-  category?: ProductCategory;
+  categoryId?: number;
   featured?: boolean;
   search?: string;
 }

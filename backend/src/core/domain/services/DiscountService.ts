@@ -49,7 +49,7 @@ export class DiscountService {
     subtotalInCents: number;
     discountInCents: number;
     discountPercent: number;
-    source: 'manual' | 'progressive';
+    source: 'manual' | 'progressive' | 'coupon' | 'mixed' | 'none';
     userId?: number;
     ip?: string;
     userAgent?: string;

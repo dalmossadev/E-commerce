@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { CreateLeadUseCase, ListLeadsUseCase, GetLeadByIdUseCase, UpdateLeadStatusUseCase, DeleteLeadUseCase } from '@core/use-cases/LeadUseCases';
+import { CreateLeadUseCase } from '@core/use-cases/lead/CreateLeadUseCase';
+import { ListLeadsUseCase } from '@core/use-cases/lead/ListLeadsUseCase';
+import { GetLeadByIdUseCase } from '@core/use-cases/lead/GetLeadByIdUseCase';
+import { UpdateLeadStatusUseCase } from '@core/use-cases/lead/UpdateLeadStatusUseCase';
+import { DeleteLeadUseCase } from '@core/use-cases/lead/DeleteLeadUseCase';
 import { CreateLeadDTO, UpdateLeadDTO } from '@core/dto/LeadDTO';
 import { LeadStatus } from '@core/domain/Lead';
-import { container } from '@core/container/Container';
 import { createLeadSchema, updateLeadSchema } from '../validations/lead.validation';
 
 const parseId = (param: string | string[]): number | null => {
@@ -11,19 +14,13 @@ const parseId = (param: string | string[]): number | null => {
 };
 
 export class LeadController {
-  private createLeadUseCase: CreateLeadUseCase;
-  private listLeadsUseCase: ListLeadsUseCase;
-  private getLeadByIdUseCase: GetLeadByIdUseCase;
-  private updateLeadStatusUseCase: UpdateLeadStatusUseCase;
-  private deleteLeadUseCase: DeleteLeadUseCase;
-
-  constructor() {
-    this.createLeadUseCase = container.createLeadUseCase();
-    this.listLeadsUseCase = container.listLeadsUseCase();
-    this.getLeadByIdUseCase = container.getLeadByIdUseCase();
-    this.updateLeadStatusUseCase = container.updateLeadStatusUseCase();
-    this.deleteLeadUseCase = container.deleteLeadUseCase();
-  }
+  constructor(
+    private createLeadUseCase: CreateLeadUseCase,
+    private listLeadsUseCase: ListLeadsUseCase,
+    private getLeadByIdUseCase: GetLeadByIdUseCase,
+    private updateLeadStatusUseCase: UpdateLeadStatusUseCase,
+    private deleteLeadUseCase: DeleteLeadUseCase
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

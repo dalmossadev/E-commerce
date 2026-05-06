@@ -19,7 +19,7 @@ export default function SiteInfoAdminPage() {
   }, [siteInfo]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">Erro ao carregar: {error.message}</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">Erro ao carregar: {(error as any).message}</div>;
   if (!formData) return null;
 
   const handleChange = (field: string, value: string) => {
@@ -83,14 +83,14 @@ export default function SiteInfoAdminPage() {
         <h1 className="text-3xl font-bold mb-8 text-green-400">Configurações do Site</h1>
         
         {saveMessage && (
-          <div className={`p-4 mb-6 rounded ${saveMessage.includes('Erro') ? 'bg-red-800' : 'bg-green-800'}`}>
+          <div className={`p-4 mb-6 rounded-none ${saveMessage.includes('Erro') ? 'bg-red-800' : 'bg-green-800'}`}>
             {saveMessage}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Informações Básicas */}
-          <div className="bg-gray-800 p-6 rounded-lg">
+          <div className="bg-gray-800 p-6 rounded-none">
             <h2 className="text-xl font-semibold mb-4 text-green-300">Informações Básicas</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,7 +100,7 @@ export default function SiteInfoAdminPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                  className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
                 />
               </div>
               
@@ -110,7 +110,7 @@ export default function SiteInfoAdminPage() {
                   type="text"
                   value={formData.tagline}
                   onChange={(e) => handleChange('tagline', e.target.value)}
-                  className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                  className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
                 />
               </div>
             </div>
@@ -121,13 +121,13 @@ export default function SiteInfoAdminPage() {
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 rows={3}
-                className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
               />
             </div>
           </div>
 
           {/* WhatsApp */}
-          <div className="bg-gray-800 p-6 rounded-lg">
+          <div className="bg-gray-800 p-6 rounded-none">
             <h2 className="text-xl font-semibold mb-4 text-green-300">WhatsApp</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,7 +138,7 @@ export default function SiteInfoAdminPage() {
                   value={formData.whatsapp.number}
                   onChange={(e) => handleChange('whatsapp.number', e.target.value)}
                   placeholder="5571999999999"
-                  className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                  className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
                 />
               </div>
               
@@ -148,14 +148,14 @@ export default function SiteInfoAdminPage() {
                   value={formData.whatsapp.message}
                   onChange={(e) => handleChange('whatsapp.message', e.target.value)}
                   rows={2}
-                  className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                  className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Redes Sociais */}
-          <div className="bg-gray-800 p-6 rounded-lg">
+          <div className="bg-gray-800 p-6 rounded-none">
             <h2 className="text-xl font-semibold mb-4 text-green-300">Redes Sociais</h2>
             
             <div>
@@ -165,7 +165,7 @@ export default function SiteInfoAdminPage() {
                 value={formData.social.instagram}
                 onChange={(e) => handleChange('social.instagram', e.target.value)}
                 placeholder="https://instagram.com/seuusuario"
-                className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-green-400 focus:outline-none"
+                className="w-full p-3 bg-gray-700 rounded-none border border-gray-600 focus:border-green-400 focus:outline-none"
               />
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function SiteInfoAdminPage() {
         </form>
 
         {/* Preview */}
-        <div className="mt-12 bg-gray-800 p-6 rounded-lg">
+        <div className="mt-12 bg-gray-800 p-6 rounded-none">
           <h2 className="text-xl font-semibold mb-4 text-green-300">Preview</h2>
           <div className="space-y-2 text-sm text-gray-300">
             <p><strong>Nome:</strong> {formData.name}</p>

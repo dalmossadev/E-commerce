@@ -1,8 +1,8 @@
 import { ProductVariant } from "./ProductVariant";
 import { User } from "./User";
+import { Category } from "./Category";
 
 // src/core/domain/Product.ts
-export type ProductCategory = 'destaque' | 'eletronicos' | 'moda' | 'casa' | 'esporte' | 'beleza';
 export type ProductBadge = 'novo' | 'oferta' | 'exclusivo' | 'esgotando' | 'lancamento' | null;
 
 export class Product {
@@ -15,7 +15,8 @@ export class Product {
     public imageName!: string;
     public imageUrl?: string | null = null;  // Definido pelo Use Case com URL completa
     public altText!: string;
-    public category!: ProductCategory;
+    public categoryId!: number;
+    public category?: Category;
     public badge?: ProductBadge | null = null;
     public inStock?: boolean = true;
     public featured?: boolean = false;
@@ -68,21 +69,21 @@ export class Product {
         this.updatedAt = new Date();
     }
 
-    public applyDiscount(newPrice: number): void {
-        if (!this.basePrice || newPrice >= this.basePrice) {
-            throw new Error('Discount price must be less than base price');
+    public setOriginalPrice(price: number | null): void {
+        if (price !== null && this.basePrice && price <= this.basePrice) {
+            throw new Error('Original price must be greater than base price');
         }
-        this.originalPrice = this.basePrice;
-        this.basePrice = newPrice;
+        this.originalPrice = price;
         this.updatedAt = new Date();
     }
 
-    public removeDiscount(): void {
-        if (this.originalPrice) {
-            this.basePrice = this.originalPrice;
-            this.originalPrice = null;
-            this.updatedAt = new Date();
+    public applyDiscount(discountedPrice: number): void {
+        if (!this.basePrice || discountedPrice >= this.basePrice) {
+            throw new Error('Discounted price must be less than current base price');
         }
+        this.originalPrice = this.basePrice;
+        this.basePrice = discountedPrice;
+        this.updatedAt = new Date();
     }
 
     public updateBasePrice(newPrice: number): void {
@@ -93,8 +94,8 @@ export class Product {
         this.updatedAt = new Date();
     }
 
-    public updateCategory(category: ProductCategory): void {
-        this.category = category;
+    public updateCategory(categoryId: number): void {
+        this.categoryId = categoryId;
         this.updatedAt = new Date();
     }
 

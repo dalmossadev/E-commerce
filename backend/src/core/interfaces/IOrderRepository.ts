@@ -8,4 +8,5 @@ export interface IOrderRepository {
   delete(id: number): Promise<void>;
   findByCustomerId(customerId: number): Promise<Order[]>;
   findByExternalId(externalId: string): Promise<Order | undefined>;
+  countAll(): Promise<number>;
 }

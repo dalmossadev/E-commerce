@@ -9,7 +9,7 @@ const FRONTEND_PRODUCTS = [
   {
     name: 'Tênis Runner Pro X',
     brand: 'Nike',
-    category: 'esporte' as any,
+    categoryId: 1, // Geral
     basePrice: 19990,
     description: 'Amortecimento de alta performance para corridas urbanas.',
     originalPrice: 27990,
@@ -23,7 +23,7 @@ const FRONTEND_PRODUCTS = [
   {
     name: 'Mochila Urban Carry 30L',
     brand: 'Urban',
-    category: 'moda' as any,
+    categoryId: 1, // Geral
     basePrice: 14990,
     description: 'Mochila impermeável para o dia a dia.',
     badge: 'novo' as any,

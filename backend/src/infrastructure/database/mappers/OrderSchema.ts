@@ -14,6 +14,10 @@ export const OrderSchema = new EntitySchema<Order>({
     shippingAddress: { type: "text", nullable: true },
     subtotal: { type: "int", default: 0 },
     discount: { type: "int", default: 0 },
+    discountSource: { type: "varchar", length: 20, default: 'none' },
+    couponCode: { type: "varchar", length: 50, nullable: true },
+    couponDiscount: { type: "int", default: 0 },
+    shippingCost: { type: "int", default: 0 },
     total: { type: "int", default: 0 },
     status: { 
       type: "varchar", 

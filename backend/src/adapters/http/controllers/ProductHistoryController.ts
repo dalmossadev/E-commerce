@@ -1,15 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { GetVariantHistoryBySkuUseCase, GetAllVariantHistoryUseCase } from '@core/use-cases/product-history/VariantHistoryUseCases';
-import { container } from '@core/container/Container';
+import { GetVariantHistoryBySkuUseCase } from '@core/use-cases/product-history/GetVariantHistoryBySkuUseCase';
+import { GetAllVariantHistoryUseCase } from '@core/use-cases/product-history/GetAllVariantHistoryUseCase';
 
 export class ProductHistoryController {
-  private getBySkuUseCase: GetVariantHistoryBySkuUseCase;
-  private getAllUseCase: GetAllVariantHistoryUseCase;
-
-  constructor() {
-    this.getBySkuUseCase = new GetVariantHistoryBySkuUseCase();
-    this.getAllUseCase = new GetAllVariantHistoryUseCase();
-  }
+  constructor(
+    private getBySkuUseCase: GetVariantHistoryBySkuUseCase,
+    private getAllUseCase: GetAllVariantHistoryUseCase
+  ) {}
 
   async getBySku(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

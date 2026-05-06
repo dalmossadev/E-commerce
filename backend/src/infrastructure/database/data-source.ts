@@ -24,6 +24,9 @@ import { BannerSchema } from "./mappers/BannerSchema";
 import { PaymentSchema } from "./mappers/PaymentSchema";
 import { SiteConfigSchema } from "./mappers/SiteConfigSchema";
 import { FinancialTransactionSchema } from "./mappers/FinancialTransactionSchema";
+import { AddressSchema } from "./mappers/AddressSchema";
+import { CategorySchema } from "./mappers/CategorySchema";
+import { ShippingRuleSchema } from "./mappers/ShippingRuleSchema";
 
 dotenv.config();
 
@@ -62,6 +65,9 @@ synchronize: true,
         PaymentSchema,
         SiteConfigSchema,
         FinancialTransactionSchema,
+        AddressSchema,
+        CategorySchema,
+        ShippingRuleSchema,
     ],
     
     // Mantemos o caminho para migrations caso precise no futuro

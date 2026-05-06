@@ -38,17 +38,17 @@ type ProductCardProps = {
     id: number;
     name: string;
     description: string;
-    basePrice?: number;  // centavos — dividir por 100 para exibir
-    price?: number;
+    basePrice: number;  // centavos — dividir por 100 para exibir
     originalPrice?: number;  // centavos
     imageName: string;
     altText: string;
-    imageUrl?: string;  // URL completa vinda do backend: http://localhost:3000/img/catalogo/arquivo.webp
-    category: string;
+    imageUrl?: string;  // URL completa vinda do backend
+    categoryId: number;
+    category?: { id: number; name: string; slug: string };
     badge?: string | null;
     inStock: boolean;
     featured?: boolean;
-    specs?: Record<string, string>;
+    specs?: Record<string, any>;
     sku?: string;
     variant?: {
       fulfillmentType?: string;
@@ -115,10 +115,9 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
   // Optional chaining em todos os acessos
   const name          = product?.name           ?? 'Produto';
   const description   = product?.description    ?? '';
-  // API usa basePrice em centavos, config usa price
-  const basePrice    = (product as any)?.basePrice ?? (product as any)?.price ?? 0;
+  const basePrice    = product?.basePrice || (product as any)?.variants?.[0]?.price || 0;
   const displayPrice  = (basePrice / 100).toFixed(2);  // converte centavos para reais
-  const originalPrice = (product as any)?.originalPrice;
+  const originalPrice = product?.originalPrice || (product as any)?.originalPrice;
   const displayOriginal = originalPrice ? (originalPrice / 100).toFixed(2) : null;
   const imageName    = product?.imageName || '';
   const altText       = product?.altText        ?? `Imagem de ${name}`;
@@ -217,7 +216,7 @@ export function ProductCard({ product: propProduct, sku, className }: ProductCar
                         id: product.id, 
                         name: product.name, 
                         sku: effectiveSku,
-                        price: basePrice,
+                        basePrice: basePrice,
                         imageName: imageName,
                         variants: (product as any).variants
                       });

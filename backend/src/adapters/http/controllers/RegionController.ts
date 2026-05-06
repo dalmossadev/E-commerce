@@ -30,7 +30,7 @@ export class RegionController {
         return res.status(400).json({ message: 'Region and SKU parameters are required' });
       }
 
-      const product = await this.getProductsByRegionUseCase['productRepository'].findBySku(sku);
+      const product = await this.getProductsByRegionUseCase.findProductBySku(sku);
       
       if (!product) {
         return res.status(404).json({ message: 'Product not found' });

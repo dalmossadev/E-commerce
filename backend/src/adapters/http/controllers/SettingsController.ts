@@ -1,30 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
-import { GetSettingByKeyUseCase, ListSettingsUseCase, CreateSettingsUseCase, UpdateSettingsUseCase, DeleteSettingsUseCase } from '@core/use-cases/settings/SettingsUseCases';
+import { GetSettingByKeyUseCase } from '@core/use-cases/settings/GetSettingByKeyUseCase';
+import { ListSettingsUseCase } from '@core/use-cases/settings/ListSettingsUseCase';
+import { CreateSettingsUseCase } from '@core/use-cases/settings/CreateSettingsUseCase';
+import { UpdateSettingsUseCase } from '@core/use-cases/settings/UpdateSettingsUseCase';
+import { DeleteSettingsUseCase } from '@core/use-cases/settings/DeleteSettingsUseCase';
 import { GetSettingsUseCase } from '@core/use-cases/settings/GetSettingsUseCase';
-import { GetSiteInfoUseCase, UpdateSiteInfoUseCase, SiteInfoDTO } from '@core/use-cases/settings/SiteInfoUseCases';
-import { container } from '@core/container/Container';
+import { GetSiteInfoUseCase, SiteInfoDTO } from '@core/use-cases/settings/GetSiteInfoUseCase';
+import { UpdateSiteInfoUseCase } from '@core/use-cases/settings/UpdateSiteInfoUseCase';
 import { createSettingsSchema, updateSettingsSchema } from '../validations/settings.validation';
 
 export class SettingsController {
-  private getSettingByKeyUseCase: GetSettingByKeyUseCase;
-  private getSettingsUseCase: GetSettingsUseCase;
-  private listSettingsUseCase: ListSettingsUseCase;
-  private createSettingsUseCase: CreateSettingsUseCase;
-  private updateSettingsUseCase: UpdateSettingsUseCase;
-  private deleteSettingsUseCase: DeleteSettingsUseCase;
-  private getSiteInfoUseCase: GetSiteInfoUseCase;
-  private updateSiteInfoUseCase: UpdateSiteInfoUseCase;
-
-  constructor() {
-    this.getSettingByKeyUseCase = container.getSettingByKeyUseCase();
-    this.getSettingsUseCase = container.getSettingsUseCase();
-    this.listSettingsUseCase = container.listSettingsUseCase();
-    this.createSettingsUseCase = container.createSettingsUseCase();
-    this.updateSettingsUseCase = container.updateSettingsUseCase();
-    this.deleteSettingsUseCase = container.deleteSettingsUseCase();
-    this.getSiteInfoUseCase = container.getSiteInfoUseCase();
-    this.updateSiteInfoUseCase = container.updateSiteInfoUseCase();
-  }
+  constructor(
+    private getSettingByKeyUseCase: GetSettingByKeyUseCase,
+    private getSettingsUseCase: GetSettingsUseCase,
+    private listSettingsUseCase: ListSettingsUseCase,
+    private createSettingsUseCase: CreateSettingsUseCase,
+    private updateSettingsUseCase: UpdateSettingsUseCase,
+    private deleteSettingsUseCase: DeleteSettingsUseCase,
+    private getSiteInfoUseCase: GetSiteInfoUseCase,
+    private updateSiteInfoUseCase: UpdateSiteInfoUseCase
+  ) {}
 
   async getByKey(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

@@ -8,4 +8,5 @@ export interface ICustomerRepository {
   update(customer: Customer): Promise<Customer>;
   delete(id: number): Promise<void>;
   findByCpf(cpf: string): Promise<Customer | null>;
+  countAll(): Promise<number>;
 }

@@ -70,4 +70,50 @@ export class TypeORMFinancialTransactionRepository implements IFinancialTransact
       net: income - expense - fees
     };
   }
+
+  async getAggregatedStats(startDate: Date, endDate: Date, interval: 'day' | 'week' | 'month' | 'year'): Promise<Array<{
+    period: string;
+    income: number;
+    expense: number;
+    net: number;
+  }>> {
+    const transactions = await this.repository.find({
+      where: {
+        settledAt: Between(startDate, endDate),
+        status: TransactionStatus.SETTLED
+      },
+      order: { settledAt: 'ASC' }
+    });
+
+    const groups: Record<string, { income: number; expense: number; net: number }> = {};
+
+    transactions.forEach(t => {
+      let period = '';
+      const date = t.settledAt!;
+      
+      if (interval === 'day') period = date.toISOString().split('T')[0];
+      else if (interval === 'month') period = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      else if (interval === 'year') period = `${date.getFullYear()}`;
+      else {
+        // Simple week grouping
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - d.getDay()); // First day of week
+        period = d.toISOString().split('T')[0];
+      }
+
+      if (!groups[period]) groups[period] = { income: 0, expense: 0, net: 0 };
+      
+      if (t.type === TransactionType.INCOME) groups[period].income += t.amount;
+      else {
+        groups[period].expense += t.amount;
+      }
+      groups[period].net = groups[period].income - groups[period].expense;
+    });
+
+    return Object.entries(groups).map(([period, data]) => ({
+      period,
+      ...data
+    }));
+  }
 }

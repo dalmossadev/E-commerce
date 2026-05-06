@@ -1,15 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { CreateOrderUseCase, UpdateOrderStatusUseCase, CancelOrderUseCase, ListOrdersUseCase, GetOrderByIdUseCase } from '@core/use-cases/orders/OrderUseCases';
+import { CreateOrderUseCase } from '@core/use-cases/orders/CreateOrderUseCase';
+import { UpdateOrderStatusUseCase } from '@core/use-cases/orders/UpdateOrderStatusUseCase';
+import { CancelOrderUseCase } from '@core/use-cases/orders/CancelOrderUseCase';
+import { ListOrdersUseCase } from '@core/use-cases/orders/ListOrdersUseCase';
+import { GetOrderByIdUseCase } from '@core/use-cases/orders/GetOrderByIdUseCase';
 import { ConfirmPaymentUseCase } from '@core/use-cases/orders/ConfirmPaymentUseCase';
 import { GetOrderPixUseCase } from '@core/use-cases/orders/GetOrderPixUseCase';
 import { CreateOrderDTO, UpdateOrderStatusDTO } from '@core/dto/OrderDTO';
-import { OrderStatus, PaymentMethod } from '@core/domain/Order';
+import { OrderStatus } from '@core/domain/Order';
 import { DiscountService } from '@core/domain/services/DiscountService';
-import { container } from '@core/container/Container';
 import { createOrderSchema, updateOrderStatusSchema, applyDiscountSchema } from '../validations/order.validation';
 import { FulfillmentType } from '@core/domain/ProductVariant';
 import { BadRequestError } from '@core/errors/CustomErrors';
 import { authService } from '@infrastructure/auth/AuthService';
+import { IProductRepository } from '@core/interfaces/IProductRepository';
+import { IOrderRepository } from '@core/interfaces/IOrderRepository';
 
 const parseId = (param: string | string[]): number | null => {
   const id = parseInt(Array.isArray(param) ? param[0] : param, 10);
@@ -17,31 +22,18 @@ const parseId = (param: string | string[]): number | null => {
 };
 
 export class OrderController {
-  private createOrderUseCase: CreateOrderUseCase;
-  private updateOrderStatusUseCase: UpdateOrderStatusUseCase;
-  private cancelOrderUseCase: CancelOrderUseCase;
-  private listOrdersUseCase: ListOrdersUseCase;
-  private getOrderByIdUseCase: GetOrderByIdUseCase;
-  private confirmPaymentUseCase: ConfirmPaymentUseCase;
-  private getOrderPixUseCase: GetOrderPixUseCase;
-  private discountService?: DiscountService;
-
-  constructor() {
-    this.createOrderUseCase = container.createOrderUseCase();
-    this.updateOrderStatusUseCase = container.updateOrderStatusUseCase();
-    this.cancelOrderUseCase = container.cancelOrderUseCase();
-    this.listOrdersUseCase = container.listOrdersUseCase();
-    this.getOrderByIdUseCase = container.getOrderByIdUseCase();
-    this.confirmPaymentUseCase = container.confirmPaymentUseCase();
-    this.getOrderPixUseCase = container.getOrderPixUseCase();
-  }
-
-  private getDiscountService(): DiscountService {
-    if (!this.discountService) {
-      this.discountService = container.discountService();
-    }
-    return this.discountService;
-  }
+  constructor(
+    private createOrderUseCase: CreateOrderUseCase,
+    private updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private cancelOrderUseCase: CancelOrderUseCase,
+    private listOrdersUseCase: ListOrdersUseCase,
+    private getOrderByIdUseCase: GetOrderByIdUseCase,
+    private confirmPaymentUseCase: ConfirmPaymentUseCase,
+    private getOrderPixUseCase: GetOrderPixUseCase,
+    private productRepository: IProductRepository,
+    private orderRepository: IOrderRepository,
+    private discountService: DiscountService
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -49,8 +41,7 @@ export class OrderController {
 
       const itemsWithPrices = await Promise.all(
         rawData.items.map(async (item: any) => {
-          const productRepo = container.productRepository();
-          const variant = await productRepo.findVariantById(item.variantId);
+          const variant = await this.productRepository.findVariantById(item.variantId);
 
           if (!variant) {
             throw new BadRequestError(`Variant ${item.variantId} not found`);
@@ -62,7 +53,7 @@ export class OrderController {
 
           if (variant.fulfillmentType === FulfillmentType.IN_STOCK) {
             variant.decreaseStock(item.quantity);
-            await productRepo.updateVariant(variant);
+            await this.productRepository.updateVariant(variant);
           }
 
           return {
@@ -164,11 +155,10 @@ export class OrderController {
       order.applyDiscount(data.discountAmount);
 
       if (oldDiscount !== order.discount) {
-        const discountService = this.getDiscountService();
         const user = (req as any).user;
         const discountPercent = order.subtotal > 0 ? Math.round(order.discount / order.subtotal * 100) : 0;
 
-        await discountService.applyDiscountWithAudit({
+        await this.discountService.applyDiscountWithAudit({
           orderId: order.id,
           subtotalInCents: order.subtotal,
           discountInCents: order.discount,
@@ -180,8 +170,7 @@ export class OrderController {
         });
       }
 
-      const orderRepo = container.orderRepository();
-      await orderRepo.update(order);
+      await this.orderRepository.update(order);
       res.json(order);
     } catch (error) {
       next(error);

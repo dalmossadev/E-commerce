@@ -1,11 +1,11 @@
 import { Product } from '../domain/Product';
-import { ProductCategory } from '../domain/Product';
 import { ProductVariant } from '../domain/ProductVariant';
 
 export interface ProductQueryOptions {
   page?: number;
   limit?: number;
-  category?: ProductCategory;
+  categoryId?: number;
+  categorySlug?: string;
   featured?: boolean;
   search?: string;
   minPrice?: number;
@@ -31,9 +31,12 @@ export interface IProductRepository {
   update(product: Product): Promise<Product>;
   delete(id: number): Promise<void>;
   search(query: string): Promise<Product[]>;
-  findByCategory(category: ProductCategory): Promise<Product[]>;
-  count(category?: ProductCategory): Promise<number>;
+  findByCategory(categoryId: number): Promise<Product[]>;
+  count(categoryId?: number): Promise<number>;
   findVariantById(variantId: number): Promise<ProductVariant | undefined>;
   updateVariant(variant: ProductVariant): Promise<ProductVariant>;
   updateImage(sku: string, imageUrl: string): Promise<void>;
+  countAll(): Promise<number>;
+  countLowStockVariants(threshold: number): Promise<number>;
+  findAllVariants(): Promise<ProductVariant[]>;
 }

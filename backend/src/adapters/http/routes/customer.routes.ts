@@ -1,18 +1,13 @@
 import { Router } from 'express';
-import { CustomerController } from '../controllers/CustomerController';
-import { validate } from '../middlewares/ValidationMiddleware';
-import { createCustomerSchema, updateCustomerSchema } from '../validations/customer.validation';
+import { container } from '@core/container/Container';
 
-export { CustomerController };
+const router = Router();
+const customerController = container.getCustomerController();
 
-const customerRouter = Router();
+router.get('/', (req, res) => customerController.list(req, res));
+router.get('/:id', (req, res) => customerController.getById(req, res));
+router.post('/', (req, res) => customerController.create(req, res));
+router.put('/:id', (req, res) => customerController.update(req, res));
+router.delete('/:id', (req, res) => customerController.delete(req, res));
 
-const customerController = new CustomerController();
-
-customerRouter.post('/', validate(createCustomerSchema), (req, res, next) => customerController.create(req, res, next));
-customerRouter.get('/', (req, res, next) => customerController.list(req, res, next));
-customerRouter.get('/:id', (req, res, next) => customerController.getById(req, res, next));
-customerRouter.patch('/:id', validate(updateCustomerSchema), (req, res, next) => customerController.update(req, res, next));
-customerRouter.delete('/:id', (req, res, next) => customerController.delete(req, res, next));
-
-export { customerRouter };
+export { router as customerRouter };

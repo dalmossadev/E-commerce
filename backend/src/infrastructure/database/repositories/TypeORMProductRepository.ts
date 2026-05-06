@@ -24,7 +24,7 @@ export class TypeORMProductRepository implements IProductRepository {
       where: {
         variants: { sku }
       },
-      relations: ['variants']
+      relations: ['variants', 'category']
     });
   }
 
@@ -33,10 +33,18 @@ export class TypeORMProductRepository implements IProductRepository {
     const limit = options?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.repository.createQueryBuilder('product');
+    const queryBuilder = this.repository.createQueryBuilder('product')
+      .leftJoinAndSelect('product.variants', 'variant');
 
-    if (options?.category) {
-      queryBuilder.andWhere('product.category = :category', { category: options.category });
+    if (options?.categorySlug) {
+      queryBuilder.innerJoinAndSelect('product.category', 'category');
+      queryBuilder.where('category.slug = :categorySlug', { categorySlug: options.categorySlug });
+    } else {
+      queryBuilder.leftJoinAndSelect('product.category', 'category');
+    }
+
+    if (options?.categoryId) {
+      queryBuilder.andWhere('product.categoryId = :categoryId', { categoryId: options.categoryId });
     }
 
     if (options?.featured !== undefined) {
@@ -66,7 +74,6 @@ export class TypeORMProductRepository implements IProductRepository {
     }
 
     const [data, total] = await queryBuilder
-      .leftJoinAndSelect('product.variants', 'variant')
       .skip(skip)
       .take(limit)
       .getManyAndCount();
@@ -83,7 +90,7 @@ export class TypeORMProductRepository implements IProductRepository {
   async findById(id: number): Promise<Product | undefined> {
     const product = await this.repository.findOne({ 
       where: { id },
-      relations: ['variants']
+      relations: ['variants', 'category']
     });
     return product || undefined;
   }
@@ -106,17 +113,17 @@ export class TypeORMProductRepository implements IProductRepository {
       .getMany();
   }
 
-  async findByCategory(category: string): Promise<Product[]> {
+  async findByCategory(categoryId: number): Promise<Product[]> {
     return await this.repository.find({ 
-      where: { category: category as any },
-      relations: ['variants']
+      where: { categoryId },
+      relations: ['variants', 'category']
     });
   }
 
-  async count(category?: string): Promise<number> {
+  async count(categoryId?: number): Promise<number> {
     const queryBuilder = this.repository.createQueryBuilder('product');
-    if (category) {
-      queryBuilder.where('product.category = :category', { category });
+    if (categoryId) {
+      queryBuilder.where('product.categoryId = :categoryId', { categoryId });
     }
     return await queryBuilder.getCount();
   }
@@ -142,5 +149,21 @@ export class TypeORMProductRepository implements IProductRepository {
       product.imageName = filename;
       await this.repository.save(product);
     }
+  }
+
+  async countAll(): Promise<number> {
+    return await this.repository.count();
+  }
+
+  async countLowStockVariants(threshold: number): Promise<number> {
+    return await this.variantRepository
+      .createQueryBuilder('variant')
+      .where('variant.stock < :threshold', { threshold })
+      .getCount();
+  }
+  async findAllVariants(): Promise<ProductVariant[]> {
+    return await this.variantRepository.find({
+      relations: ['product']
+    });
   }
 }

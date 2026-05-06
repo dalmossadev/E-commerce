@@ -1,13 +1,10 @@
 import { Router } from 'express';
-import { SettingsController } from '@adapters/http/controllers/SettingsController';
+import { container } from '@core/container/Container';
 import { validate } from '@adapters/http/middlewares/ValidationMiddleware';
 import { createSettingsSchema, updateSettingsSchema } from '@adapters/http/validations/settings.validation';
 
-export { SettingsController };
-
 const settingsRouter = Router();
-
-const settingsController = new SettingsController();
+const settingsController = container.getSettingsController();
 
 // Site Info consolidated endpoints (must be before /:key to avoid catch-all)
 settingsRouter.get('/site-info', (req, res, next) => settingsController.getSiteInfo(req, res, next));

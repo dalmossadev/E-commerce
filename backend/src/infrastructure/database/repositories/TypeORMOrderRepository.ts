@@ -89,4 +89,8 @@ export class TypeORMOrderRepository implements IOrderRepository {
     });
     return order || undefined;
   }
+
+  async countAll(): Promise<number> {
+    return await this.repository.count();
+  }
 }

@@ -12,7 +12,7 @@ export const ProductSchema = new EntitySchema<Product>({
     description: { type: "text" },
     basePrice: { type: "int", nullable: true },
     originalPrice: { type: "int", nullable: true },
-    category: { type: "varchar", length: 50 },
+    categoryId: { type: "int" },
     imageName: { type: "varchar", length: 255 },
     altText: { type: "varchar", length: 255 },
     badge: { type: "varchar", length: 50, nullable: true },
@@ -41,6 +41,12 @@ export const ProductSchema = new EntitySchema<Product>({
       target: "User",
       joinColumn: { name: "updatedBy" },
       onDelete: "SET NULL", // Mantém o produto mesmo se o usuário for removido
+    },
+    category: {
+      type: "many-to-one",
+      target: "Category",
+      joinColumn: { name: "categoryId" },
+      onDelete: "RESTRICT",
     },
   },
 });

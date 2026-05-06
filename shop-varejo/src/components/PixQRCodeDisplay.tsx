@@ -97,7 +97,7 @@ export function PixQRCodeDisplay({ orderId, qrCodeBase64, qrCodePayload, total, 
     <div className="container-app py-20">
       <div className="max-w-md mx-auto bg-brand-surface border border-brand-border p-8 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="bg-green-500/10 text-green-500 p-3 rounded-full">
+          <div className="bg-green-500/10 text-green-500 p-3 rounded-none">
             <Check size={32} />
           </div>
         </div>

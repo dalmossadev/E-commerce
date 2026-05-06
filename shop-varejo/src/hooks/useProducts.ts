@@ -1,119 +1,70 @@
-'use client';
-
 import { useState, useEffect, useCallback } from 'react';
+import { Product } from '@/types/interfaces';
+import { productService } from '@/lib/api/services/productService';
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  basePrice: number;
-  originalPrice?: number;
-  imageName: string;
-  altText: string;
-  category: string;
-  badge?: string;
-  inStock: boolean;
-  featured: boolean;
-  specs?: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProductsResponse {
-  data: Product[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-interface UseProductsOptions {
-  category?: string;
-  featured?: boolean;
-  search?: string;
-  limit?: number;
-  page?: number;
-}
-
-export function useProducts(options?: UseProductsOptions) {
+export function useProducts(initialOptions: { page?: number; limit?: number; category?: string; search?: string } = {}) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [options, setOptions] = useState(initialOptions);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (options?.category) params.set('category', options.category);
-      if (options?.featured !== undefined) params.set('featured', String(options.featured));
-      if (options?.search) params.set('search', options.search);
-      if (options?.limit) params.set('limit', String(options.limit));
-      if (options?.page) params.set('page', String(options.page));
-
-      const queryString = params.toString();
-      const url = `/api/products${queryString ? `?${queryString}` : ''}`;
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch products');
-
-       const data = await response.json();
-       // API retorna { data: Product[], total, page, limit, totalPages }
-       setProducts(data.data || data);
+      const result = await productService.list(options);
+      setProducts(result.data);
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Erro ao carregar produtos');
     } finally {
       setLoading(false);
     }
-  }, [options?.category, options?.featured, options?.search, options?.limit, options?.page]);
+  }, [options]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
+  const createProduct = async (data: any) => {
+    const result = await productService.create(data);
+    await fetchProducts();
+    return result;
+  };
+
+  const updateProduct = async (sku: string, data: any) => {
+    const result = await productService.update(sku, data);
+    await fetchProducts();
+    return result;
+  };
+
+  const deleteProduct = async (sku: string) => {
+    await productService.delete(sku);
+    await fetchProducts();
+  };
+
+  const uploadImage = async (sku: string, file: File) => {
+    const imageUrl = await productService.uploadImage(sku, file);
+    await fetchProducts();
+    return imageUrl;
+  };
+
   return {
     products,
+    total,
+    totalPages,
     loading,
     error,
+    options,
+    setOptions,
     refetch: fetchProducts,
-  };
-}
-
-export function useProduct(sku: string) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchProduct = useCallback(async () => {
-    if (!sku) return;
-    
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/products/${sku}`);
-      if (!response.ok) throw new Error('Failed to fetch product');
-
-       const data = await response.json();
-       // Novo formato: API retorna { data: Product } ou Product direto
-       const product = data.data || data;
-       setProduct(product);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }, [sku]);
-
-  useEffect(() => {
-    fetchProduct();
-  }, [fetchProduct]);
-
-  return {
-    product,
-    loading,
-    error,
-    refetch: fetchProduct,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    uploadImage
   };
 }

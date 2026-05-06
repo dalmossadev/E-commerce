@@ -1,10 +1,17 @@
-import { Purchase, PurchaseItem, PurchaseStatus } from '@core/domain/Purchase';
-import { IPurchaseRepository } from '@core/interfaces/IPurchaseRepository';
-import { IProductRepository } from '@core/interfaces/IProductRepository';
-import { CreatePurchaseDTO, UpdatePurchaseDTO, CreatePurchaseItemDTO } from '@core/dto/PurchaseDTO';
-import { BadRequestError, NotFoundError } from '@core/errors/CustomErrors';
+import { Purchase, PurchaseItem, PurchaseStatus } from '../../domain/Purchase';
+import { IPurchaseRepository } from '../../interfaces/IPurchaseRepository';
+import { CreatePurchaseDTO, CreatePurchaseItemDTO } from '../../dto/PurchaseDTO';
+import { BadRequestError } from '../../errors/CustomErrors';
 
-class PurchaseValidator {
+export interface IPurchaseValidator {
+  validate(data: CreatePurchaseDTO): void;
+}
+
+export interface IPurchaseFactory {
+  create(data: CreatePurchaseDTO): Purchase;
+}
+
+export class PurchaseValidator implements IPurchaseValidator {
   validate(data: CreatePurchaseDTO): void {
     if (!data.supplierId) {
       throw new BadRequestError('Supplier is required');
@@ -32,7 +39,7 @@ class PurchaseValidator {
   }
 }
 
-class PurchaseFactory {
+export class PurchaseFactory implements IPurchaseFactory {
   create(data: CreatePurchaseDTO): Purchase {
     const purchase = new Purchase();
     purchase.supplierId = data.supplierId;
@@ -59,77 +66,16 @@ class PurchaseFactory {
 }
 
 export class CreatePurchaseOrderUseCase {
-  private validator: PurchaseValidator;
-  private factory: PurchaseFactory;
-
   constructor(
     private purchaseRepository: IPurchaseRepository,
-    private productRepository?: IProductRepository
-  ) {
-    this.validator = new PurchaseValidator();
-    this.factory = new PurchaseFactory();
-  }
+    private validator: IPurchaseValidator,
+    private factory: IPurchaseFactory
+  ) {}
 
   async execute(data: CreatePurchaseDTO): Promise<Purchase> {
     this.validator.validate(data);
     
     const purchase = this.factory.create(data);
     return await this.purchaseRepository.save(purchase);
-  }
-}
-
-export class ListPurchasesUseCase {
-  constructor(private purchaseRepository: IPurchaseRepository) {}
-
-  async execute(status?: PurchaseStatus, supplierId?: number): Promise<Purchase[]> {
-    if (supplierId) {
-      return await this.purchaseRepository.findBySupplier(supplierId);
-    }
-    return await this.purchaseRepository.findAll(status);
-  }
-}
-
-export class GetPurchaseByIdUseCase {
-  constructor(private purchaseRepository: IPurchaseRepository) {}
-
-  async execute(id: number): Promise<Purchase> {
-    const purchase = await this.purchaseRepository.findById(id);
-    if (!purchase) {
-      throw new NotFoundError('Purchase', id);
-    }
-    return purchase;
-  }
-}
-
-export class UpdatePurchaseStatusUseCase {
-  constructor(private purchaseRepository: IPurchaseRepository) {}
-
-  async execute(id: number, data: UpdatePurchaseDTO): Promise<Purchase> {
-    const purchase = await this.purchaseRepository.findById(id);
-    if (!purchase) {
-      throw new NotFoundError('Purchase', id);
-    }
-
-    if (data.status) {
-      if (data.status === PurchaseStatus.CANCELLED) {
-        purchase.cancel();
-      } else if (data.status === PurchaseStatus.ORDERED) {
-        purchase.markAsOrdered();
-      } else if (data.status === PurchaseStatus.SHIPPED) {
-        purchase.markAsShipped(data.trackingNumber);
-      } else if (data.status === PurchaseStatus.RECEIVED) {
-        purchase.receiveInventory();
-      }
-    }
-
-    if (data.notes !== undefined) {
-      purchase.notes = data.notes;
-    }
-
-    if (data.trackingNumber) {
-      purchase.trackingNumber = data.trackingNumber;
-    }
-
-    return await this.purchaseRepository.update(purchase);
   }
 }

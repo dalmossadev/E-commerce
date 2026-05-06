@@ -1,13 +1,10 @@
 import { Router } from 'express';
-import { LeadController } from '../controllers/LeadController';
 import { validate } from '../middlewares/ValidationMiddleware';
 import { createLeadSchema, updateLeadSchema } from '../validations/lead.validation';
-
-export { LeadController };
+import { container } from '@core/container/Container';
 
 const leadRouter = Router();
-
-const leadController = new LeadController();
+const leadController = container.getLeadController();
 
 leadRouter.post('/', validate(createLeadSchema), (req, res, next) => leadController.create(req, res, next));
 leadRouter.get('/', (req, res, next) => leadController.list(req, res, next));

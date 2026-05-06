@@ -1,5 +1,4 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ProductController } from "@adapters/http/controllers/ProductController";
 import { validate } from "@adapters/http/middlewares/ValidationMiddleware";
 import { createProductSchema, updateProductSchema } from "@adapters/http/validations/product.validation";
 import { container } from "@core/container/Container";
@@ -9,14 +8,7 @@ const productRouter = Router();
 
 const API_BASE = "/api/v1";
 
-const productController = new ProductController(
-  container.listProductsUseCase(),
-  container.getProductBySkuUseCase(),
-  container.createProductUseCase(),
-  container.updateProductUseCase(),
-  container.deleteProductUseCase(),
-  container.uploadProductImageUseCase()
-);
+const productController = container.getProductController();
 
 productRouter.post(
   "/",
@@ -28,7 +20,7 @@ productRouter.get("/", (req: Request, res: Response, next: NextFunction) => prod
 
 productRouter.get("/:sku", (req: Request, res: Response, next: NextFunction) => productController.getBySku(req, res, next));
 
-productRouter.put(
+productRouter.patch(
   "/:sku",
   validate(updateProductSchema),
   (req: Request, res: Response, next) => productController.update(req, res, next)

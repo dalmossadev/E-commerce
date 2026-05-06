@@ -1,16 +1,19 @@
 // src/adapters/http/routes/banner.routes.ts
-import { Router } from "express";
-import { BannerController } from "../../../presentation/controllers/banner-controller";
-import { TypeORMBannerRepository } from "../../../infrastructure/database/repositories/TypeORMBannerRepository";
-import { ListBannersUseCase } from "../../../core/use-cases/banner/ListBannerUseCase";
+import { Router, Request, Response } from "express";
+import { container } from "@core/container/Container";
+import { upload } from "@infrastructure/upload/upload";
 
 const bannerRouter = Router();
+const bannerController = container.getBannerController();
 
-// Injeção de dependência manual (Factory Pattern)
-const bannerRepository = new TypeORMBannerRepository();
-const listBannersUseCase = new ListBannersUseCase(bannerRepository);
-const bannerController = new BannerController(listBannersUseCase);
+bannerRouter.get("/", (req, res, next) => bannerController.list(req, res, next));
 
-bannerRouter.get("/", (req, res, next) => bannerController.handle(req, res, next));
+bannerRouter.post("/", (req: Request, res: Response, next) => bannerController.create(req, res, next));
+
+bannerRouter.patch("/:id", (req: Request, res: Response, next) => bannerController.update(req, res, next));
+
+bannerRouter.delete("/:id", (req: Request, res: Response, next) => bannerController.delete(req, res, next));
+
+bannerRouter.post("/:id/image", upload.single('image'), (req: Request, res: Response, next) => bannerController.uploadImage(req, res, next));
 
 export { bannerRouter };

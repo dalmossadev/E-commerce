@@ -1,15 +1,14 @@
 import { Router } from "express";
-import { WishlistController } from "../controllers/WishlistController";
+import { container } from "@core/container/Container";
 import { authenticate } from "../middlewares/AuthMiddleware";
 import { validate } from "../middlewares/ValidationMiddleware";
 import { addToWishlistSchema } from "../validations/wishlist.validation";
 
 const wishlistRouter = Router();
+const wishlistController = container.getWishlistController();
 
-const wishlistController = new WishlistController();
-
-wishlistRouter.post("/", authenticate, validate(addToWishlistSchema), wishlistController.addToWishlist);
-wishlistRouter.get("/", authenticate, wishlistController.getWishlist);
-wishlistRouter.delete("/", authenticate, wishlistController.removeFromWishlist);
+wishlistRouter.post("/", authenticate, validate(addToWishlistSchema), (req, res, next) => wishlistController.addToWishlist(req, res, next));
+wishlistRouter.get("/", authenticate, (req, res, next) => wishlistController.getWishlist(req, res, next));
+wishlistRouter.delete("/", authenticate, (req, res, next) => wishlistController.removeFromWishlist(req, res, next));
 
 export { wishlistRouter };

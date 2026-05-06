@@ -10,16 +10,16 @@ export class TypeORMSupplierRepository implements ISupplierRepository {
   }
 
   async findAll(): Promise<Supplier[]> {
-    return await this.repository.find();
+    return await this.repository.find({ relations: ["addresses", "category"] });
   }
 
   async findById(id: number): Promise<Supplier | undefined> {
-    const supplier = await this.repository.findOne({ where: { id } });
+    const supplier = await this.repository.findOne({ where: { id }, relations: ["addresses", "category"] });
     return supplier || undefined;
   }
 
   async findByCnpj(cnpj: string): Promise<Supplier | undefined> {
-    const supplier = await this.repository.findOne({ where: { cnpj } });
+    const supplier = await this.repository.findOne({ where: { cnpj }, relations: ["addresses", "category"] });
     return supplier || undefined;
   }
 
@@ -29,5 +29,9 @@ export class TypeORMSupplierRepository implements ISupplierRepository {
 
   async update(supplier: Supplier): Promise<Supplier> {
     return await this.repository.save(supplier);
+  }
+
+  async countAll(): Promise<number> {
+    return await this.repository.count();
   }
 }

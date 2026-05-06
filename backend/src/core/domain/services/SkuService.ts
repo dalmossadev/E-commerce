@@ -24,7 +24,7 @@ export class DefaultSkuFormatter implements ISkuFormatter {
     format(input: SkuInput): string {
         const brand = this.getBrandCode(input.brand);
         const name = this.getNameCode(input.name);
-        const category = this.getCategoryCode(input.category);
+        const category = this.getCategoryCode(input.categoryId);
         const color = this.getColorCode(input.color);
         const size = this.getSizeCode(input.size);
 
@@ -53,8 +53,8 @@ export class DefaultSkuFormatter implements ISkuFormatter {
         return this.normalize(name).slice(0, 7);
     }
 
-    private getCategoryCode(category: string): string {
-        return this.normalize(category).slice(0, 3);
+    private getCategoryCode(categoryId: number): string {
+        return `CAT${categoryId.toString().padStart(2, '0')}`;
     }
 
     private getColorCode(color: string): string {
@@ -91,8 +91,8 @@ export class SkuService {
         if (!input.name || input.name.trim().length === 0) {
             throw new Error('Name is required for SKU generation');
         }
-        if (!input.category || input.category.trim().length === 0) {
-            throw new Error('Category is required for SKU generation');
+        if (input.categoryId === undefined || input.categoryId <= 0) {
+            throw new Error('Valid Category ID is required for SKU generation');
         }
         if (!input.color || input.color.trim().length === 0) {
             throw new Error('Color is required for SKU generation');

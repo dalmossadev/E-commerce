@@ -38,4 +38,8 @@ export class TypeORMUserRepository implements IUserRepository {
   async update(user: User): Promise<User> {
     return await this.repository.save(user);
   }
+
+  async countAll(): Promise<number> {
+    return await this.repository.count();
+  }
 }

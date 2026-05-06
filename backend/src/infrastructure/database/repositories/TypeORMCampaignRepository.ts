@@ -26,7 +26,7 @@ export class TypeORMCampaignRepository implements ICampaignRepository {
     }
 
     if (query?.search) {
-      qb.andWhere('campaign.name ILIKE :search OR campaign.slug ILIKE :search', { search: `%${query.search}%` });
+      qb.andWhere('campaign.name LIKE :search OR campaign.slug LIKE :search', { search: `%${query.search}%` });
     }
 
     const sortBy = query?.sortBy || 'createdAt';

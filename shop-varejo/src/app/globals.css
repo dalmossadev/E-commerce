@@ -35,14 +35,14 @@ body {
 :focus-visible {
   outline: 2px solid #00FF00;
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 0px;
 }
 :focus:not(:focus-visible) { outline: none; }
 
 /* ── Scrollbar neon ──────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; }
 ::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #00FF00; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #00FF00; border-radius: 0px; }
 
 /* ── Seleção de texto ─────────────────────────────────── */
 ::selection {
@@ -104,7 +104,7 @@ body::after {
 @layer components {
   /* Card base */
   .card {
-    @apply bg-brand-surface border border-brand-border rounded-xl overflow-hidden
+    @apply bg-brand-surface border border-brand-border rounded-none overflow-hidden
            transition-all duration-300;
   }
   .card:hover {
@@ -114,7 +114,7 @@ body::after {
 
   /* Badge */
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-bold
+    @apply inline-flex items-center px-2 py-0.5 rounded-none text-xs font-bold
            font-mono tracking-wider uppercase;
   }
 }

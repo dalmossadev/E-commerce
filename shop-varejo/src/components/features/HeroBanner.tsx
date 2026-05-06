@@ -36,22 +36,22 @@ function HeroBannerSkeleton() {
           {/* Eyebrow */}
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px w-12 bg-brand-primary/30" />
-            <div className="h-4 w-32 rounded bg-brand-primary/20" />
+            <div className="h-4 w-32 rounded-none bg-brand-primary/20" />
           </div>
           {/* Título */}
           <div className="space-y-3">
-            <div className="h-16 w-3/4 rounded bg-white/10" />
-            <div className="h-16 w-1/2 rounded bg-white/10" />
+            <div className="h-16 w-3/4 rounded-none bg-white/10" />
+            <div className="h-16 w-1/2 rounded-none bg-white/10" />
           </div>
           {/* Subtítulo */}
           <div className="space-y-2 mt-6">
-            <div className="h-4 w-full max-w-lg rounded bg-white/10" />
-            <div className="h-4 w-2/3 rounded bg-white/10" />
+            <div className="h-4 w-full max-w-lg rounded-none bg-white/10" />
+            <div className="h-4 w-2/3 rounded-none bg-white/10" />
           </div>
           {/* CTAs */}
           <div className="flex gap-4 mt-10">
-            <div className="h-14 w-40 rounded bg-brand-primary/20" />
-            <div className="h-14 w-40 rounded bg-white/10" />
+            <div className="h-14 w-40 rounded-none bg-brand-primary/20" />
+            <div className="h-14 w-40 rounded-none bg-white/10" />
           </div>
         </div>
       </div>

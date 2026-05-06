@@ -44,6 +44,10 @@ export class GetProductsByRegionUseCase {
     });
   }
 
+  async findProductBySku(sku: string): Promise<Product | null> {
+    return await this.productRepository.findBySku(sku);
+  }
+
   isProntaEntrega(region: string, product: Product): boolean {
     const normalizedRegion = region.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     

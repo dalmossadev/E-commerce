@@ -75,7 +75,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map(item =>
           item.sku === newItem.sku
-            ? { ...item, quantity: item.quantity + newItem.quantity }
+            ? { 
+                ...item, 
+                quantity: item.quantity + newItem.quantity,
+                price: (item.price === 0 || !item.price) ? newItem.price : item.price,
+                unitPrice: (item.unitPrice === 0 || !item.unitPrice) ? newItem.unitPrice : item.unitPrice
+              }
             : item
         );
       }

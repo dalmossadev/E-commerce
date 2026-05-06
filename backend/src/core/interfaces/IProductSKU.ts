@@ -1,13 +1,13 @@
 // src/core/interfaces/IProductSKU.ts
 
-import { ProductBadge, ProductCategory } from "@core/domain/Product";
+import { ProductBadge } from "@core/domain/Product";
 
 
 export type ProductData = {
   id?: number;
   name: string;
   brand: string;
-  category: ProductCategory;
+  categoryId: number;
   basePrice: number;
   attributes: {
     colors: string[];
@@ -33,7 +33,7 @@ export type ProductVariant = {
 export type SkuInput = {
   name: string;
   brand: string;
-  category: ProductCategory;
+  categoryId: number;
   color: string;
   size: string;
   uniqueId?: string; // opcional (para garantir unicidade)

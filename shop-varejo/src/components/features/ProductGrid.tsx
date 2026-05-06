@@ -8,21 +8,7 @@ import { useState, useEffect } from 'react';
 import { ProductCard } from './ProductCard';
 import { CategoryFilter } from './CategoryFilter';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  basePrice: number;  // centavos — dividir por 100 para exibir
-  originalPrice?: number;  // centavos
-  imageName: string;
-  imageUrl?: string;  // URL completa: http://localhost:3000/img/catalogo/arquivo.webp
-  altText: string;
-  category: string;
-  badge?: string | null;  // null = não exibir badge
-  inStock: boolean;
-  featured: boolean;
-  specs?: Record<string, string>;
-}
+import { Product } from '@/types/interfaces';
 
 interface ProductsResponse {
   data: Product[];

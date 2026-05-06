@@ -11,7 +11,7 @@ export class TypeORMCustomerRepository implements ICustomerRepository {
   }
 
   async findById(id: number): Promise<Customer | null> {
-    return await this.repository.findOne({ where: { id } });
+    return await this.repository.findOne({ where: { id }, relations: ["addresses"] });
   }
 
   async findAll(query?: CustomerQueryDTO): Promise<{ data: Customer[]; total: number; page: number; limit: number; totalPages: number }> {
@@ -19,10 +19,11 @@ export class TypeORMCustomerRepository implements ICustomerRepository {
     const limit = query?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const qb = this.repository.createQueryBuilder('customer');
+    const qb = this.repository.createQueryBuilder('customer')
+      .leftJoinAndSelect('customer.addresses', 'addresses');
 
     if (query?.search) {
-      qb.where('customer.fullName ILIKE :search OR customer.cpf ILIKE :search', { search: `%${query.search}%` });
+      qb.where('customer.fullName LIKE :search OR customer.cpf LIKE :search', { search: `%${query.search}%` });
     }
 
     const sortBy = query?.sortBy || 'createdAt';
@@ -46,6 +47,10 @@ export class TypeORMCustomerRepository implements ICustomerRepository {
   }
 
   async findByCpf(cpf: string): Promise<Customer | null> {
-    return await this.repository.findOne({ where: { cpf } });
+    return await this.repository.findOne({ where: { cpf }, relations: ["addresses"] });
+  }
+
+  async countAll(): Promise<number> {
+    return await this.repository.count();
   }
 }

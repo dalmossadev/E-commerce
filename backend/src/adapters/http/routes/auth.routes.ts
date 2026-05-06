@@ -1,6 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { AuthUseCases } from '@core/use-cases/AuthUseCases';
-import { RefreshTokenUseCase } from '@core/use-cases/auth/RefreshTokenUseCase';
 import { LoginDTO, RegisterDTO, RefreshTokenDTO } from '@core/dto/AuthDTO';
 import { container } from '@core/container/Container';
 import { AppError } from '@core/errors/AppError';
@@ -11,7 +9,8 @@ import { authRateLimit } from '../middlewares/RateLimitMiddleware';
 
 const authRouter = Router();
 
-const authUseCases = container.authUseCases();
+const loginUseCase = container.loginUseCase();
+const registerUseCase = container.registerUseCase();
 const refreshTokenUseCase = container.refreshTokenUseCase();
 
 authRouter.get('/me', async (req: Request, res: Response, next: NextFunction) => {
@@ -32,7 +31,6 @@ authRouter.get('/me', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const payload = authService.verifyAccessToken(token);
-
     const user = await container.userRepository().findById(payload.sub);
 
     if (!user) {
@@ -53,7 +51,7 @@ authRouter.get('/me', async (req: Request, res: Response, next: NextFunction) =>
 authRouter.post('/login', validate(loginSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: LoginDTO = req.body;
-    const result = await authUseCases.login(data);
+    const result = await loginUseCase.execute(data);
     res.json(result);
   } catch (error) {
     next(error);
@@ -63,7 +61,7 @@ authRouter.post('/login', validate(loginSchema), async (req: Request, res: Respo
 authRouter.post('/register', authRateLimit, validate(registerSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data: RegisterDTO = req.body;
-    const result = await authUseCases.register(data);
+    const result = await registerUseCase.execute(data);
     res.status(201).json(result);
   } catch (error) {
     next(error);

@@ -8,6 +8,8 @@ export class Campaign {
   startDate?: Date;
   endDate?: Date;
   targetUrl?: string;     // Caso queira redirecionar para uma landing page
+  createdAt!: Date;
+  updatedAt!: Date;
 
   constructor(data: Partial<Campaign> = {}) {
     Object.assign(this, data);

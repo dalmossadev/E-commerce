@@ -1,11 +1,11 @@
 import { IProductRepository } from "@core/interfaces/IProductRepository";
-import { Product, ProductCategory } from "@core/domain/Product";
+import { Product } from "@core/domain/Product";
 import { NotFoundError } from "@core/errors/CustomErrors";
 
 export interface UpdateProductInput {
   name?: string;
   brand?: string;
-  category?: ProductCategory;
+  categoryId?: number;
   basePrice?: number;
   originalPrice?: number | null;
   badge?: string | null;
@@ -36,8 +36,8 @@ export class UpdateProductUseCase {
       product.brand = input.brand;
     }
 
-    if (input.category !== undefined) {
-      product.updateCategory(input.category);
+    if (input.categoryId !== undefined) {
+      product.updateCategory(input.categoryId);
     }
 
     if (input.basePrice !== undefined) {
@@ -45,11 +45,7 @@ export class UpdateProductUseCase {
     }
 
     if (input.originalPrice !== undefined) {
-      if (input.originalPrice === null) {
-        product.removeDiscount();
-      } else if (input.originalPrice > (product.basePrice ?? 0)) {
-        product.applyDiscount(input.originalPrice);
-      }
+      product.setOriginalPrice(input.originalPrice);
     }
 
     if (input.badge !== undefined) {

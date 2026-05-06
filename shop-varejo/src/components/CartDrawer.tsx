@@ -71,14 +71,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="flex items-center gap-2">
             <h2 className="font-display text-xl font-bold uppercase tracking-tight">Meu Carrinho</h2>
             {totalItems > 0 && (
-              <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-none">
                 {totalItems}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-none transition-colors"
             aria-label="Fechar carrinho"
           >
             <X size={20} />
@@ -89,7 +89,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto p-6">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center gap-4">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-2">
+              <div className="w-16 h-16 bg-gray-50 rounded-none flex items-center justify-center mb-2">
                 <ShoppingBag size={32} className="text-gray-300" />
               </div>
               <p className="font-display text-gray-500 uppercase tracking-widest text-sm">Seu carrinho está vazio</p>
@@ -106,7 +106,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <ul className="space-y-6">
               {items.map((item) => (
                 <li key={item.sku} className="flex gap-4 group">
-                  <div className="relative w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-20 h-20 bg-gray-50 rounded-none overflow-hidden flex-shrink-0">
                     <Image
                       src={`/img/catalogo/${item.imageName}`}
                       alt={item.name}
@@ -132,7 +132,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </div>
 
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-black rounded">
+                      <div className="flex items-center border border-black rounded-none">
                         <button
                           onClick={() => updateQuantity(item.sku, item.quantity - 1)}
                           className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"

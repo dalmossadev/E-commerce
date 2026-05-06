@@ -17,6 +17,8 @@ export interface CreateOrderDTO {
   customerEmail: string;
   customerPhone: string;
   shippingAddress?: string;
+  zipCode?: string;
+  couponCode?: string;
   items: CreateOrderItemDTO[];
   paymentMethod?: PaymentMethod;
   notes?: string;

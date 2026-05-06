@@ -1,4 +1,11 @@
 // ── Tipos ──────────────────────────────────────────────────────────
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 // ── Enums ──────────────────────────────────────────────────────
 export enum LeadStatus {
   PENDING = 'pending',
@@ -29,13 +36,22 @@ export enum PurchaseStatus {
   CANCELLED = 'cancelled',
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  type: 'PRODUCT' | 'SUPPLIER';
+}
+
 export type ProductCategory =
   | 'destaque'
   | 'eletronicos'
   | 'moda'
   | 'casa'
   | 'esporte'
-  | 'beleza';
+  | 'beleza'
+  | string; // Permitir categorias dinâmicas do backend
 
 export type ProductBadge =
   | 'novo'
@@ -45,19 +61,21 @@ export type ProductBadge =
   | null;
 
 export interface Product {
+  id:          number;        // ID do banco de dados
   sku:         string;        // Identificador único. Ex: 'PROD001'
   name:        string;
   description: string;
-  price:       number;        // Em centavos. Ex: 19990 = R$199,90
+  basePrice:   number;        // Em centavos. Ex: 19990 = R$199,90
   originalPrice?: number;     // Preço original (para exibir desconto)
   imageName:   string;        // Apenas o arquivo. Ex: 'tenis-preto.webp'
   altText:     string;        // Acessibilidade — descreva a imagem
-  category:    ProductCategory;
+  categoryId:  number;        // ID da categoria no banco
+  category?:   Category;      // Objeto completo da categoria
   badge:       ProductBadge;
   inStock:     boolean;
   whatsappMessage?: string;   // Mensagem personalizada por produto
   featured:    boolean;       // Aparece na seção de destaques
-  specs?: Record<string, string>; // Especificações técnicas opcionais
+  specs?: Record<string, any>; // Especificações técnicas opcionais
 }
 
 export interface Banner {
@@ -74,3 +92,28 @@ export interface Banner {
 
 
 
+
+export interface Address {
+  id: number;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  latitude?: number;
+  longitude?: number;
+  isMain: boolean;
+  tag?: string;
+  customerId?: number;
+  supplierId?: number;
+}
+
+export interface Customer {
+  id: number;
+  fullName: string;
+  cpf: string;
+  phone: string;
+  addresses?: Address[];
+}

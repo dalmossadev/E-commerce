@@ -1,14 +1,11 @@
 import { Router } from 'express';
-import { OrderController } from '../controllers/OrderController';
 import { validate } from '../middlewares/ValidationMiddleware';
 import { authenticate, requireCustomer, requireAdmin } from '../middlewares/AuthMiddleware';
 import { createOrderSchema, updateOrderStatusSchema, applyDiscountSchema } from '../validations/order.validation';
-
-export { OrderController };
+import { container } from '@core/container/Container';
 
 const orderRouter = Router();
-
-const orderController = new OrderController();
+const orderController = container.getOrderController();
 
 orderRouter.get('/', authenticate, requireCustomer, (req, res, next) => orderController.list(req, res, next));
 orderRouter.post('/', validate(createOrderSchema), (req, res, next) => orderController.create(req, res, next));

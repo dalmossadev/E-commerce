@@ -1,20 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { container } from "@core/container/Container";
 import { AuthRequest } from "@adapters/http/middlewares/AuthMiddleware";
-import { AddProductToWishlistUseCase } from "@core/use-cases/wishlist/WishlistUseCases";
-import { RemoveProductFromWishlistUseCase } from "@core/use-cases/wishlist/WishlistUseCases";
-import { GetUserWishlistUseCase } from "@core/use-cases/wishlist/WishlistUseCases";
+import { AddProductToWishlistUseCase } from "@core/use-cases/wishlist/AddProductToWishlistUseCase";
+import { RemoveProductFromWishlistUseCase } from "@core/use-cases/wishlist/RemoveProductFromWishlistUseCase";
+import { GetUserWishlistUseCase } from "@core/use-cases/wishlist/GetUserWishlistUseCase";
 
 export class WishlistController {
-    private addToWishlistUseCase: AddProductToWishlistUseCase;
-    private removeFromWishlistUseCase: RemoveProductFromWishlistUseCase;
-    private getUserWishlistUseCase: GetUserWishlistUseCase;
-
-    constructor() {
-        this.addToWishlistUseCase = container.addToWishlistUseCase();
-        this.removeFromWishlistUseCase = container.removeFromWishlistUseCase();
-        this.getUserWishlistUseCase = container.getUserWishlistUseCase();
-    }
+    constructor(
+        private addToWishlistUseCase: AddProductToWishlistUseCase,
+        private removeFromWishlistUseCase: RemoveProductFromWishlistUseCase,
+        private getUserWishlistUseCase: GetUserWishlistUseCase
+    ) {}
 
     addToWishlist = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {

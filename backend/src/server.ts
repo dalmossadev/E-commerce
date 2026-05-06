@@ -26,14 +26,19 @@ import { campaignRouter } from '@adapters/http/routes/campaign.routes';
 import { customerRouter } from '@adapters/http/routes/customer.routes';
 import { settingsRouter } from '@adapters/http/routes/settings.routes';
 import { productHistoryRouter } from '@adapters/http/routes/product-history.routes';
-import regionRouter from '@adapters/http/routes/region.routes';
+import { regionRouter } from '@adapters/http/routes/region.routes';
 import { wishlistRouter } from '@adapters/http/routes/wishlist.routes';
+import { categoryRouter } from '@adapters/http/routes/category.routes';
 import { bannerRouter } from '@adapters/http/routes/banner.routes';
 import { paymentRouter } from '@adapters/http/routes/payment.routes';
 import { siteRouter } from '@adapters/http/routes/site.routes';
 import { webhookRouter } from '@adapters/http/routes/webhook.routes';
 import { devRoutes } from '@adapters/http/routes/dev.routes';
 import { financialRouter } from '@adapters/http/routes/financial.routes';
+import { addressRouter } from '@adapters/http/routes/address.routes';
+import { inventoryRouter } from '@adapters/http/routes/inventory.routes';
+import { shippingRouter } from '@adapters/http/routes/shipping.routes';
+import { couponRouter } from '@adapters/http/routes/coupon.routes';
 
 const app = express();
 app.set('strict routing', false);
@@ -86,11 +91,16 @@ app.use(`${API_BASE}/settings`, settingsRouter);
 app.use(`${API_BASE}/product-history`, productHistoryRouter);
 app.use(`${API_BASE}/region`, regionRouter);
 app.use(`${API_BASE}/wishlist`, wishlistRouter);
+app.use(`${API_BASE}/categories`, categoryRouter);
 app.use(`${API_BASE}/admin`, adminRouter);
 app.use(`${API_BASE}/banners`, bannerRouter);
 app.use(`${API_BASE}/payments`, paymentRouter);
 app.use(`${API_BASE}/site`, siteRouter);
 app.use(`${API_BASE}/financial`, financialRouter);
+app.use(`${API_BASE}/addresses`, addressRouter);
+app.use(`${API_BASE}/inventory`, inventoryRouter);
+app.use(`${API_BASE}/shipping`, shippingRouter);
+app.use(`${API_BASE}/coupons`, couponRouter);
 app.use('/api', healthRouter);
 
 if (process.env.NODE_ENV !== 'production') {

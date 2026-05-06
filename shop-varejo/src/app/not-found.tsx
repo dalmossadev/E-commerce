@@ -37,7 +37,7 @@ export default function NotFound() {
       {/* Glow central */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                   w-[500px] h-[300px] bg-brand-primary/5 rounded-full
+                   w-[500px] h-[300px] bg-brand-primary/5 rounded-none
                    blur-3xl pointer-events-none"
         aria-hidden="true"
       />

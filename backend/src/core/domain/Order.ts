@@ -52,7 +52,10 @@ export class Order {
   items!: OrderItem[];
   subtotal!: number;
   discount!: number;
-  discountSource!: 'none' | 'manual' | 'progressive';
+  discountSource!: 'none' | 'manual' | 'progressive' | 'coupon' | 'mixed';
+  couponCode?: string;
+  couponDiscount!: number;
+  shippingCost!: number;
   total!: number;
   status!: OrderStatus;
   paymentMethod?: PaymentMethod;
@@ -84,6 +87,8 @@ export class Order {
     Object.assign(this, props);
     this.status = this.status || OrderStatus.PENDING;
     this.discount = this.discount ?? 0;
+    this.couponDiscount = this.couponDiscount ?? 0;
+    this.shippingCost = this.shippingCost ?? 0;
     this.discountSource = this.discountSource || 'none';
     this.createdAt = this.createdAt || new Date();
     this.updatedAt = this.updatedAt || new Date();
@@ -92,7 +97,8 @@ export class Order {
 
   calculateTotal(): void {
     this.subtotal = this.items?.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
-    this.total = Math.max(0, this.subtotal - this.discount);
+    // O discount aqui representa a soma de todos os descontos (progressivo + cupom)
+    this.total = Math.max(0, this.subtotal - this.discount + this.shippingCost);
   }
 
   calculateProgressiveDiscount(discountService?: DiscountService): number {

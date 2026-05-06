@@ -1,7 +1,8 @@
 import { AppDataSource } from '@infrastructure/database/data-source';
 import { VariantHistory } from '@core/domain/VariantHistory';
+import { IVariantHistoryRepository } from '@core/interfaces/IVariantHistoryRepository';
 
-export class TypeORMVariantHistoryRepository {
+export class TypeORMVariantHistoryRepository implements IVariantHistoryRepository {
   private repository = AppDataSource.getRepository(VariantHistory);
 
   async findBySku(sku: string, page: number = 1, limit: number = 10): Promise<{ data: VariantHistory[]; total: number; page: number; limit: number; totalPages: number }> {

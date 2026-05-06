@@ -1,12 +1,8 @@
 import { Router } from 'express';
-import { RegionController } from '../controllers/RegionController';
-import { Container } from '../../../core/container/Container';
+import { container } from '@core/container/Container';
 
 const router = Router();
-
-const regionController = new RegionController(
-  Container.resolve('GetProductsByRegionUseCase') as any
-);
+const regionController = container.getRegionController();
 
 // Get all products with region availability
 router.get('/:region', (req, res, next) => 
@@ -18,4 +14,4 @@ router.get('/:region/pronta-entrega/:sku', (req, res, next) =>
   regionController.checkProntaEntrega(req, res, next)
 );
 
-export default router;
+export { router as regionRouter };

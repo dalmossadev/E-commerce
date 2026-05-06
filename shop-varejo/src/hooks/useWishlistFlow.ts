@@ -10,7 +10,7 @@ interface Product {
   id: number;
   name: string;
   sku?: string;
-  price?: number;
+  basePrice?: number;
   imageName?: string;
   variants?: Array<{
     id: number;
@@ -33,7 +33,7 @@ export function useWishlistFlow() {
     const toast = document.createElement('div');
     toast.role = 'status';
     toast.ariaLive = 'polite';
-    toast.className = 'fixed bottom-4 right-4 z-50 bg-black text-white font-mono text-sm px-4 py-3 rounded shadow-lg animate-fade-up';
+    toast.className = 'fixed bottom-4 right-4 z-50 bg-black text-white font-mono text-sm px-4 py-3 rounded-none shadow-lg animate-fade-up';
     toast.textContent = message;
 
     document.body.appendChild(toast);
@@ -87,7 +87,7 @@ export function useWishlistFlow() {
           id: product.id,
           variantId: variantId,
           name: product.name,
-          price: product.price || 0,
+          price: product.basePrice || 0,
           imageName: product.imageName || '',
           sku: sku,
           quantity: 1,
@@ -146,7 +146,7 @@ export function useWishlistFlow() {
         id: currentProduct.id,
         variantId: variant.id,
         name: currentProduct.name,
-        price: currentProduct.price || 0,
+        price: currentProduct.basePrice || 0,
         imageName: currentProduct.imageName || '',
         sku: sku,
         quantity: 1,

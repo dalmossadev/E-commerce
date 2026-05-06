@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { CreateCampaignUseCase, ListCampaignsUseCase, GetCampaignByIdUseCase, GetCampaignBySlugUseCase, UpdateCampaignUseCase, DeleteCampaignUseCase } from '@core/use-cases/campaign/CampaignUseCases';
+import { CreateCampaignUseCase } from '@core/use-cases/campaign/CreateCampaignUseCase';
+import { ListCampaignsUseCase } from '@core/use-cases/campaign/ListCampaignsUseCase';
+import { GetCampaignByIdUseCase } from '@core/use-cases/campaign/GetCampaignByIdUseCase';
+import { GetCampaignBySlugUseCase } from '@core/use-cases/campaign/GetCampaignBySlugUseCase';
+import { UpdateCampaignUseCase } from '@core/use-cases/campaign/UpdateCampaignUseCase';
+import { DeleteCampaignUseCase } from '@core/use-cases/campaign/DeleteCampaignUseCase';
 import { CreateCampaignDTO, UpdateCampaignDTO, CampaignQueryDTO } from '@core/dto/CampaignDTO';
-import { container } from '@core/container/Container';
 import { createCampaignSchema, updateCampaignSchema } from '../validations/campaign.validation';
 
 const parseId = (param: string | string[]): number | null => {
@@ -10,21 +14,14 @@ const parseId = (param: string | string[]): number | null => {
 };
 
 export class CampaignController {
-  private createCampaignUseCase: CreateCampaignUseCase;
-  private listCampaignsUseCase: ListCampaignsUseCase;
-  private getCampaignByIdUseCase: GetCampaignByIdUseCase;
-  private getCampaignBySlugUseCase: GetCampaignBySlugUseCase;
-  private updateCampaignUseCase: UpdateCampaignUseCase;
-  private deleteCampaignUseCase: DeleteCampaignUseCase;
-
-  constructor() {
-    this.createCampaignUseCase = container.createCampaignUseCase();
-    this.listCampaignsUseCase = container.listCampaignsUseCase();
-    this.getCampaignByIdUseCase = container.getCampaignByIdUseCase();
-    this.getCampaignBySlugUseCase = container.getCampaignBySlugUseCase();
-    this.updateCampaignUseCase = container.updateCampaignUseCase();
-    this.deleteCampaignUseCase = container.deleteCampaignUseCase();
-  }
+  constructor(
+    private createCampaignUseCase: CreateCampaignUseCase,
+    private listCampaignsUseCase: ListCampaignsUseCase,
+    private getCampaignByIdUseCase: GetCampaignByIdUseCase,
+    private getCampaignBySlugUseCase: GetCampaignBySlugUseCase,
+    private updateCampaignUseCase: UpdateCampaignUseCase,
+    private deleteCampaignUseCase: DeleteCampaignUseCase
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

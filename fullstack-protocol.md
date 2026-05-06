@@ -20,7 +20,7 @@ Pode copiar o conteúdo abaixo para o seu arquivo oficial:
 ### **2. Camadas de Responsabilidade**
 *   **Domain**: Entidades e interfaces. Encapsulamento total das regras de negócio[cite: 5].
 *   **Application (Use Cases)**: Representam ações do sistema (ex: `CreateLead`). Independentes de frameworks e bancos de dados[cite: 5].
-*   **Presentation (Controllers)**: Recebem requisições e validam DTOs. **PROIBIDO** conter regras de negócio ou acessar o banco diretamente[cite: 2, 5].
+*   **adapters/http/controllers**: Recebem requisições e validam DTOs. **PROIBIDO** conter regras de negócio ou acessar o banco diretamente[cite: 2, 5].
 *   **Infrastructure**: Implementações de Repositories (TypeORM), ORM e drivers externos[cite: 5].
 
 ### **3. Persistência e Regras Críticas**

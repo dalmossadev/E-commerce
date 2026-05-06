@@ -8,6 +8,8 @@ import { useSettings } from '@/contexts/SettingsContext'; // SettingsContext.tsx
 import { Button } from '@/components/ui/Button';
 import { ShoppingCart, CreditCard } from 'lucide-react';
 import { PixQRCodeDisplay } from '@/components/PixQRCodeDisplay';
+import { shippingService, ShippingResult } from '@/lib/api/services/shippingService';
+import { couponService, CouponValidationResult } from '@/lib/api/services/couponService';
 
 type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'BOLETO';
 
@@ -28,12 +30,59 @@ export default function CheckoutPage() {
   const [customerEmail, setCustomerEmail] = useState(user?.email || '');
   const [customerPhone, setCustomerPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
+  
+  // Novos Estados
+  const [zipCode, setZipCode] = useState('');
+  const [shippingData, setShippingData] = useState<ShippingResult | null>(null);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  
+  const [couponCode, setCouponCode] = useState('');
+  const [couponData, setCouponData] = useState<CouponValidationResult | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
   const [error, setError] = useState('');
   const [pixData, setPixData] = useState<{ qrCode: string; payload: string } | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+
+  // Lógica de Frete
+  const handleCalculateShipping = async () => {
+    if (zipCode.length < 8) return;
+    setIsCalculatingShipping(true);
+    setError('');
+    try {
+      const result = await shippingService.calculate(zipCode, subtotal);
+      setShippingData(result);
+    } catch (err: any) {
+      setError(err.message);
+      setShippingData(null);
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  };
+
+  // Lógica de Cupom
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setIsValidatingCoupon(true);
+    setError('');
+    try {
+      const result = await couponService.validate(couponCode, subtotal);
+      if (result.valid) {
+        setCouponData(result);
+      } else {
+        setError(result.message || 'Cupom inválido');
+        setCouponData(null);
+      }
+    } catch (err: any) {
+      setError('Erro ao validar cupom');
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
   const handlePixPaid = () => {
     clearCart();
     router.push(`/orders?success=true&orderId=${createdOrderId}`);
@@ -57,12 +106,16 @@ export default function CheckoutPage() {
     return null;
   }
 
-  const discount = subtotal >= 500000 ? Math.floor(subtotal * 0.20) :
-                   subtotal >= 200000 ? Math.floor(subtotal * 0.15) :
-                   subtotal >= 100000 ? Math.floor(subtotal * 0.10) :
-                   subtotal >= 50000 ? Math.floor(subtotal * 0.05) : 0;
+  // DESCONTOS
+  const progressiveDiscount = subtotal >= 500000 ? Math.floor(subtotal * 0.20) :
+                               subtotal >= 200000 ? Math.floor(subtotal * 0.15) :
+                               subtotal >= 100000 ? Math.floor(subtotal * 0.10) :
+                               subtotal >= 50000 ? Math.floor(subtotal * 0.05) : 0;
 
-  const total = subtotal - discount;
+  const couponDiscount = couponData?.discountAmount || 0;
+  const shippingCost = shippingData?.price || 0;
+
+  const total = subtotal - progressiveDiscount - couponDiscount + shippingCost;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +212,7 @@ export default function CheckoutPage() {
       <div className="container-app py-20">
         <div className="max-w-md mx-auto bg-brand-surface border border-brand-border p-8 text-center">
           <div className="mb-6 flex justify-center">
-             <div className="w-16 h-16 bg-[#F5F5F5] animate-pulse rounded-full" />
+             <div className="w-16 h-16 bg-[#F5F5F5] animate-pulse rounded-none" />
           </div>
           <div className="h-8 bg-[#F5F5F5] animate-pulse w-3/4 mx-auto mb-2" />
           <div className="h-4 bg-[#F5F5F5] animate-pulse w-full mx-auto mb-8" />
@@ -252,18 +305,60 @@ export default function CheckoutPage() {
                 <span className="text-brand-primary">2</span>
                 Endereço de Entrega
               </h2>
-              <div>
-                <label htmlFor="address" className="block text-sm font-mono text-brand-muted mb-1">
-                  Endereço Completo
-                </label>
-                 <textarea
-                   id="address"
-                   value={shippingAddress}
-                   onChange={(e) => setShippingAddress(e.target.value)}
-                   rows={3}
-                   placeholder="Rua, número, bairro, cidade - Estado"
-                   className="w-full px-4 py-2 bg-brand-background border border-brand-border text-brand-text focus:border-brand-primary focus:outline-none resize-none"
-                 />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="zipCode" className="block text-sm font-mono text-brand-muted mb-1">
+                      CEP *
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="zipCode"
+                        type="text"
+                        maxLength={8}
+                        placeholder="00000000"
+                        value={zipCode}
+                        onChange={(e) => setZipCode(e.target.value.replace(/\D/g, ''))}
+                        className="flex-1 px-4 py-2 bg-brand-background border border-brand-border text-brand-text focus:border-brand-primary focus:outline-none"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={handleCalculateShipping}
+                        disabled={zipCode.length < 8 || isCalculatingShipping}
+                        className="text-[10px] uppercase font-mono"
+                      >
+                        {isCalculatingShipping ? '...' : 'Calcular'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="address" className="block text-sm font-mono text-brand-muted mb-1">
+                    Endereço Completo *
+                  </label>
+                  <textarea
+                    id="address"
+                    required
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    rows={3}
+                    placeholder="Rua, número, bairro, cidade - Estado"
+                    className="w-full px-4 py-2 bg-brand-background border border-brand-border text-brand-text focus:border-brand-primary focus:outline-none resize-none"
+                  />
+                </div>
+
+                {shippingData && (
+                  <div className="p-3 bg-[#00FF00]/10 border border-[#00FF00]/30 flex justify-between items-center">
+                    <span className="text-[10px] font-mono text-[#00FF00] uppercase font-bold">
+                      {shippingData.ruleName} • Entrega em {shippingData.estimatedDays} dias
+                    </span>
+                    <span className="text-[10px] font-mono text-white font-bold">
+                      {shippingData.price === 0 ? 'GRÁTIS' : `R$ ${(shippingData.price / 100).toFixed(2).replace('.', ',')}`}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -329,18 +424,54 @@ export default function CheckoutPage() {
               </div>
               <div className="border-t border-brand-border pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-brand-muted">Subtotal ({totalItems} itens)</span>
+                  <span className="text-brand-muted">Subtotal</span>
                   <span className="text-brand-text">R$ {(subtotal / 100).toFixed(2).replace('.', ',')}</span>
                 </div>
-                {discount > 0 && (
+                
+                {progressiveDiscount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-500">Desconto progressivo</span>
-                    <span className="text-green-500">- R$ {(discount / 100).toFixed(2).replace('.', ',')}</span>
+                    <span className="text-green-500">- R$ {(progressiveDiscount / 100).toFixed(2).replace('.', ',')}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t border-brand-border">
+
+                {couponData && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-brand-primary font-bold">Cupom aplicado</span>
+                    <span className="text-brand-primary font-bold">- R$ {(couponDiscount / 100).toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-brand-muted">Frete</span>
+                  <span className="text-brand-text">
+                    {shippingData ? (shippingCost === 0 ? 'GRÁTIS' : `R$ ${(shippingCost / 100).toFixed(2).replace('.', ',')}`) : '--'}
+                  </span>
+                </div>
+
+                {/* CAMPO DE CUPOM */}
+                <div className="pt-4 border-t border-white/5">
+                   <div className="flex gap-2">
+                      <input 
+                        placeholder="CUPOM"
+                        className="flex-1 bg-white/5 border border-white/10 px-3 py-1.5 text-[10px] font-mono text-white focus:border-[#00FF00] outline-none uppercase"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value)}
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode || isValidatingCoupon}
+                        className="bg-white/10 px-3 py-1.5 text-[10px] font-mono text-white/50 hover:bg-white/20 transition-colors uppercase"
+                      >
+                        {isValidatingCoupon ? '...' : 'Aplicar'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="flex justify-between font-bold text-lg pt-4 border-t border-brand-border">
                   <span className="text-brand-text">Total</span>
-                  <span className="text-brand-primary">R$ {(total / 100).toFixed(2).replace('.', ',')}</span>
+                  <span className="text-brand-primary font-display tracking-tight">R$ {(total / 100).toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>
             </div>

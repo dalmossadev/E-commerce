@@ -7,4 +7,5 @@ export interface ISupplierRepository {
   findByCnpj(cnpj: string): Promise<Supplier | undefined>;
   delete(id: number): Promise<void>;
   update(supplier: Supplier): Promise<Supplier>;
+  countAll(): Promise<number>;
 }

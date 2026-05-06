@@ -100,7 +100,7 @@ export default function Home() {
                 { step: '02', title: 'Clique', desc: 'Toque em "Comprar via WA"' },
                 { step: '03', title: 'Converse', desc: 'Atendimento direto e humano' },
               ].map((item, i) => (
-                <div key={i} className="relative p-4 border border-brand-border rounded-lg hover:border-brand-primary/50 transition-colors group">
+                <div key={i} className="relative p-4 border border-brand-border rounded-none hover:border-brand-primary/50 transition-colors group">
                   <span className="font-mono text-brand-primary/30 text-4xl font-bold absolute -top-2 -left-1 group-hover:text-brand-primary/50 transition-colors">
                     {item.step}
                   </span>

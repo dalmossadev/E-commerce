@@ -13,6 +13,19 @@ export const CampaignSchema = new EntitySchema<Campaign>({
     isActive: { type: "boolean", default: true },
     startDate: { type: "timestamp", nullable: true },
     endDate: { type: "timestamp", nullable: true },
-    targetUrl: { type: "varchar", length: 255, nullable: true }
+    targetUrl: { type: "varchar", length: 255, nullable: true },
+    createdAt: { 
+      type: "timestamp", 
+      precision: 0,
+      createDate: true, 
+      default: () => "CURRENT_TIMESTAMP" 
+    },
+    updatedAt: { 
+      type: "timestamp", 
+      precision: 0,
+      updateDate: true, 
+      default: () => "CURRENT_TIMESTAMP",
+      onUpdate: "CURRENT_TIMESTAMP"
+    },
   }
 });

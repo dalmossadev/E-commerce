@@ -19,7 +19,7 @@ export class SeedProductsUseCase {
       const product = new Product();
       product.name = data.name;
       product.brand = data.brand;
-      product.category = data.category;
+      product.categoryId = data.categoryId;
       product.basePrice = data.basePrice;
 
       // 2. Gera o produto cartesiano de variantes
@@ -30,7 +30,7 @@ export class SeedProductsUseCase {
           const sku = this.skuService.generate({
             name: product.name,
             brand: product.brand,
-            category: product.category,
+            categoryId: product.categoryId,
             color,
             size
           });

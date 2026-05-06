@@ -1,12 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { 
-  CreateSupplierUseCase, 
-  ListSuppliersUseCase, 
-  GetSupplierByIdUseCase,
-  UpdateSupplierUseCase,
-  DeleteSupplierUseCase
-} from '@core/use-cases/SupplierUseCases';
-import { CreateSupplierDTO, UpdateSupplierDTO } from '@core/dto/SupplierDTO';
+import { Request, Response } from 'express';
+import { CreateSupplierUseCase } from '@core/use-cases/supplier/CreateSupplierUseCase';
+import { ListSuppliersUseCase } from '@core/use-cases/supplier/ListSuppliersUseCase';
+import { GetSupplierByIdUseCase } from '@core/use-cases/supplier/GetSupplierByIdUseCase';
+import { UpdateSupplierUseCase } from '@core/use-cases/supplier/UpdateSupplierUseCase';
+import { DeleteSupplierUseCase } from '@core/use-cases/supplier/DeleteSupplierUseCase';
 
 export class SupplierController {
   constructor(
@@ -17,56 +14,51 @@ export class SupplierController {
     private deleteSupplierUseCase: DeleteSupplierUseCase
   ) {}
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: Request, res: Response) {
     try {
-      const data: CreateSupplierDTO = req.body;
-      const supplier = await this.createSupplierUseCase.execute(data);
+      const supplier = await this.createSupplierUseCase.execute(req.body);
       res.status(201).json(supplier);
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async list(req: Request, res: Response, next: NextFunction) {
+  async list(req: Request, res: Response) {
     try {
       const suppliers = await this.listSuppliersUseCase.execute();
       res.json(suppliers);
     } catch (error) {
-      next(error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id as string);
-      const supplier = await this.getSupplierByIdUseCase.execute(id);
+      const supplier = await this.getSupplierByIdUseCase.execute(Number(req.params.id));
       if (!supplier) {
-        return res.status(404).json({ message: 'Supplier not found' });
+        return res.status(404).json({ error: 'Supplier not found' });
       }
       res.json(supplier);
     } catch (error) {
-      next(error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id as string);
-      const data: UpdateSupplierDTO = req.body;
-      const supplier = await this.updateSupplierUseCase.execute(id, data);
+      const supplier = await this.updateSupplierUseCase.execute(Number(req.params.id), req.body);
       res.json(supplier);
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id as string);
-      await this.deleteSupplierUseCase.execute(id);
+      await this.deleteSupplierUseCase.execute(Number(req.params.id));
       res.status(204).send();
     } catch (error) {
-      next(error);
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   }
 }

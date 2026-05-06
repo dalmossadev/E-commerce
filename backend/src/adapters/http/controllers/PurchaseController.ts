@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { CreatePurchaseOrderUseCase, UpdatePurchaseStatusUseCase } from '@core/use-cases/procurement/CreatePurchaseOrderUseCase';
-import { ListPurchasesUseCase, GetPurchaseByIdUseCase, DeletePurchaseUseCase } from '@core/use-cases/procurement/ListPurchasesUseCase';
+import { CreatePurchaseOrderUseCase } from '@core/use-cases/procurement/CreatePurchaseOrderUseCase';
+import { UpdatePurchaseStatusUseCase } from '@core/use-cases/procurement/UpdatePurchaseStatusUseCase';
+import { ListPurchasesUseCase } from '@core/use-cases/procurement/ListPurchasesUseCase';
+import { GetPurchaseByIdUseCase } from '@core/use-cases/procurement/GetPurchaseByIdUseCase';
+import { DeletePurchaseUseCase } from '@core/use-cases/procurement/DeletePurchaseUseCase';
 import { ReceiveInventoryUseCase } from '@core/use-cases/procurement/ReceiveInventoryUseCase';
 import { CreatePurchaseDTO, UpdatePurchaseDTO, ReceiveInventoryDTO } from '@core/dto/PurchaseDTO';
 import { PurchaseStatus } from '@core/domain/Purchase';
-import { container } from '@core/container/Container';
 import { createPurchaseSchema, updatePurchaseSchema, receiveInventorySchema } from '../validations/purchase.validation';
 
 const parseId = (param: string | string[]): number | null => {
@@ -13,21 +15,14 @@ const parseId = (param: string | string[]): number | null => {
 };
 
 export class PurchaseController {
-  private createPurchaseOrderUseCase: CreatePurchaseOrderUseCase;
-  private listPurchasesUseCase: ListPurchasesUseCase;
-  private getPurchaseByIdUseCase: GetPurchaseByIdUseCase;
-  private updatePurchaseStatusUseCase: UpdatePurchaseStatusUseCase;
-  private receiveInventoryUseCase: ReceiveInventoryUseCase;
-  private deletePurchaseUseCase: DeletePurchaseUseCase;
-
-  constructor() {
-    this.createPurchaseOrderUseCase = container.createPurchaseUseCase();
-    this.listPurchasesUseCase = container.listPurchasesUseCase();
-    this.getPurchaseByIdUseCase = container.getPurchaseByIdUseCase();
-    this.updatePurchaseStatusUseCase = container.updatePurchaseStatusUseCase();
-    this.receiveInventoryUseCase = container.receiveInventoryUseCase();
-    this.deletePurchaseUseCase = container.deletePurchaseUseCase();
-  }
+  constructor(
+    private createPurchaseOrderUseCase: CreatePurchaseOrderUseCase,
+    private listPurchasesUseCase: ListPurchasesUseCase,
+    private getPurchaseByIdUseCase: GetPurchaseByIdUseCase,
+    private updatePurchaseStatusUseCase: UpdatePurchaseStatusUseCase,
+    private receiveInventoryUseCase: ReceiveInventoryUseCase,
+    private deletePurchaseUseCase: DeletePurchaseUseCase
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
